@@ -21,9 +21,6 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "logitechmediaserver": "git://github.com/paulcull/node-logitechmediaserver"
-  },
-  "optionalDependencies": {
-    "mdns":"git://github.com/agnat/node_mdns.git"
   },  
   "config":{
     "sockets":[]
