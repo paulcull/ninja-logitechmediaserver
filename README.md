@@ -1,4 +1,4 @@
-ninja-logitechmediaserver
-=========================
+ninja-xbmc
+==========
 
-Ninjablock module for the old logitech media server
+Ninja Blocks XBMC Module

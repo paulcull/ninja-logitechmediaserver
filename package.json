@@ -1,0 +1,31 @@
+{
+  "name": "ninja-xbmc",
+  "version": "0.0.1",
+  "description": "Ninja Blocks module for interacting with Squeezebox or Logitech Media Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:paulcull/ninja-squeezebox.git"
+  },
+  "keywords": [
+    "Squeezebox",
+    "Logitech Media Server",
+    "Ninja",
+    "Blocks"
+  ],
+  "author": "Paul Cullender",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "logitechmediaserver": "https://github.com/paulcull/node-logitechmediaserver"
+  },
+  "optionalDependencies": {
+    "mdns":"git://github.com/agnat/node_mdns.git"
+  },  
+  "config":{
+    "sockets":[]
+  }
+}
