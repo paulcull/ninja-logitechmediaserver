@@ -1,4 +1,4 @@
-ninja-xbmc
-==========
+ninja-logitechmediaserver
+=========================
 
-Ninja Blocks XBMC Module
+Ninja Blocks Logitech Media Server / Squeezebox Module
