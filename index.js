@@ -134,32 +134,35 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   // set subscriptions to each of the events
   'logitech_event,property'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
+    //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      console.log('**** nb emit logitech event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayProp.guid,eventName,e);
+      ninja.devices('**** nb emit logitech event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayProp.guid,eventName,e);
       self.devices.displayProp.emit('data', eventName+':'+e);
     });
   });
 
   'name'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
+    //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      //console.log("******** +++++ got name command with : %s", e);
+      self.app.log.debug("******** +++++ got name command with : %s", e);
       if (self.name != e) {
         Object.keys(self.devices).forEach(function(id) {
           self.name = e;
           self.app.log.debug('(Squeezebox) : Adding sub-device',host, self.name, id, self.devices[id].G);
           self.devices[id].name = self.name+self.devices[id]._name;
-          console.log("Device is %s", JSON.stringify(self.devices[id]));
+          self.app.log.debug("Device is %s", JSON.stringify(self.devices[id]));
           emitter.emit('register', self.devices[id]);
         });
+      } else
+      { 
+          self.app.log.debug('In this part of the code for LMS');
       }
-      console.log('**** nb emit name event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
+      //console.log('**** nb emit name event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
       self.devices.displayName.emit('name',e);
       self.devices.displayName.emit('data', 'name is '+e);
 
-// push back into the driver part, but wait for the names to be collected before trying to udpate anything
+      // push back into the driver part, but wait for the names to be collected before trying to udpate anything
 
 
     });
@@ -182,7 +185,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     //console.log('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      console.log('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
+      self.app.log.debug('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
       if (e === 'playlist pause 0') {
         //console.log('**** nb emit logitech un pause on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
         self.devices.displayPlay.emit('data', 'playlist is '+e);
@@ -225,6 +228,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.writeable = false;
     this.V = 0;
     this.D = 14;
+    //this.G = self.mac;
     this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._name = ' - HID';
   }
@@ -233,9 +237,11 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   function displayText(qual) {
     this.readable = true;
     this.writeable = false;
+    this.qual = qual;
     this.V = 0;
     this.D = 240;
-    this.G = qual+':'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    //this.G = self.mac;
+    this.G = qual+''+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._name = ' - Text ['+qual+']';
   }
   util.inherits(displayText, stream);
@@ -251,6 +257,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.V = 0;
     this.D = 207;
     this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    //this.G = self.mac;
     this._name = ' - Switch On/Off';
 
   }
@@ -267,6 +274,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.V = 0;
     this.D = 215;
     this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    //this.G = self.mac;
     this._name = ' - Volume';
 
   }
@@ -283,6 +291,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.playerName = self.mac;
     this.V = 0;
     this.D = 1004;
+    //this.G = self.mac;
     this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._guid = [self.app.id,this.G,this.V,this.D].join('_');
     this._name = " - Cover Art Viewer";
