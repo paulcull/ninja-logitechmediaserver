@@ -10,7 +10,8 @@ var LogitechMediaServer = require('logitechmediaserver'),
 
 var log = console.log;
 var lmsip = '192.168.1.90';
-var lmsname = 'HOME'
+var lmsname = 'HOME';
+var enabled = false;
 
 util.inherits(driver,stream);
 util.inherits(LMSDevice,stream);
@@ -18,6 +19,10 @@ util.inherits(LMSDevice,stream);
 
 function driver(opts, app) {
 
+if (!enabled) {
+  app.log.info('(Squeezebox) Squeezebox driver is disabled');
+  break;
+}
 
 //      host:self._app.opts.lmsip,
 
