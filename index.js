@@ -229,7 +229,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.V = 0;
     this.D = 14;
     //this.G = self.mac;
-    this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._name = ' - HID';
   }
   util.inherits(hid, stream);
@@ -241,7 +241,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.V = 0;
     this.D = 240;
     //this.G = self.mac;
-    this.G = qual+''+self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    this.G = 'LMSD'+qual+''+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._name = ' - Text ['+qual+']';
   }
   util.inherits(displayText, stream);
@@ -256,7 +256,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.writeable = true;
     this.V = 0;
     this.D = 207;
-    this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     //this.G = self.mac;
     this._name = ' - Switch On/Off';
 
@@ -273,7 +273,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.writeable = false;
     this.V = 0;
     this.D = 215;
-    this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     //this.G = self.mac;
     this._name = ' - Volume';
 
@@ -292,7 +292,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this.V = 0;
     this.D = 1004;
     //this.G = self.mac;
-    this.G = self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this._guid = [self.app.id,this.G,this.V,this.D].join('_');
     this._name = " - Cover Art Viewer";
     this.host = host;
