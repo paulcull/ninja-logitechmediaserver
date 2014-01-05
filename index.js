@@ -7,11 +7,12 @@ var LogitechMediaServer = require('logitechmediaserver'),
     messages = require('./lib/config-messages');
 
 // ES: This code is horrid. Please fix it.
+// If Elliot says it horrid then it is
 
 var log = console.log;
-var lmsip = '192.168.1.90';
+var lmsip = 'localhost';
 var lmsname = 'HOME';
-var enabled = false;
+var enabled = true;
 
 util.inherits(driver,stream);
 util.inherits(LMSDevice,stream);
@@ -21,18 +22,17 @@ function driver(opts, app) {
 
 if (!enabled) {
   app.log.info('(Squeezebox) Squeezebox driver is disabled');
-  break;
 }
-
-//      host:self._app.opts.lmsip,
 
   this._app = app;
   this._opts = opts;
 
   this._devices = [];
   var self = this;
+
+  host = opts.lmsip;
   
-  app.on('client::up',function(){
+  app.once('client::up',function(){
 
     if (!opts.hasSentAnnouncement) {
       self.emit('announcement',messages.hello);
@@ -111,10 +111,12 @@ driver.prototype.scan = function(host, name, app) {
 driver.prototype.add = function(host, name, lms, mac) {
   var self = this;
   var _lmsDevice = new LMSDevice(host, name, self._app, lms, mac, self);
-  console.log("getting to add device called %s", lms.players[mac].name);
   // var _lmsDevice = new LMSDevice(host, lms.players[mac].name, self._app, lms, mac);
   self._devices.push(_lmsDevice);
 
+  // These need to get added under the name event once the player is up
+  // this allows us to name the devices properly
+  //
   // Object.keys(_lmsDevice.devices).forEach(function(id) {
   //   self._app.log.debug('(Squeezebox) : Adding sub-device',host, id, _lmsDevice.devices[id].G);
   //   self.emit('register', _lmsDevice.devices[id]);
@@ -134,99 +136,145 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
 
   // set this collection of devices to a unique squeezebox
   player = lms.players[mac];
-  //name = player.getName
 
   // set subscriptions to each of the events
+  // these events are captured in the squeezeplayer.js controller in the logitechmediaserver node_module
   'logitech_event,property'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      ninja.devices('**** nb emit logitech event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayProp.guid,eventName,e);
       self.devices.displayProp.emit('data', eventName+':'+e);
     });
   });
 
+  //name is what it says - name of the player
   'name'
   .split(',').forEach(  function listenToNotification(eventName) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      self.app.log.debug("******** +++++ got name command with : %s", e);
       if (self.name != e) {
         Object.keys(self.devices).forEach(function(id) {
           self.name = e;
           self.app.log.debug('(Squeezebox) : Adding sub-device',host, self.name, id, self.devices[id].G);
           self.devices[id].name = self.name+self.devices[id]._name;
-          self.app.log.debug("Device is %s", JSON.stringify(self.devices[id]));
+          self.app.log.debug('(Squeezebox) : Device is %s', JSON.stringify(self.devices[id]));
           emitter.emit('register', self.devices[id]);
         });
       } else
       { 
-          self.app.log.debug('In this part of the code for LMS');
+          self.app.log.debug('In this part of the code for LMS - I shouldnt be here');
       }
-      //console.log('**** nb emit name event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
       self.devices.displayName.emit('name',e);
       self.devices.displayName.emit('data', 'name is '+e);
 
       // push back into the driver part, but wait for the names to be collected before trying to udpate anything
 
-
     });
   });
 
-  'songId'
+  //songinfo has all the track details
+  'songinfo'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      //console.log('**** nb emit songID event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
-      //self.devices.displayName.emit('name',e);
-      //self.devices.displayName.emit('data', 'name is '+e);
-      //console.log('**** nb emit coverart action with host: %s',this.host);
-      //self.devices.coverArt.emit('data',e);
-      self.devices.coverArt.write('NIL');
+      self.devices.mediaObject._data.track.name = e.title;
+      self.devices.mediaObject._data.track.artist = e.artist;
+      self.devices.mediaObject._data.track.album = e.album;
+      self.devices.mediaObject._data.track.disc_number = e.disc;
+      self.devices.mediaObject._data.track.track_number = e.tracknum;
+      self.devices.mediaObject._data.track.id = e.id;
+      self.devices.mediaObject._data.state.track_id = e.id;
+      self.devices.mediaObject._data.track.album_artist = e.artist;
+      self.devices.mediaObject._data.track.squeeze_url = e.file;
+      self.devices.mediaObject._data.image = 'http://' + host + ':9000/music/' + e.coverid + '/cover_375x375_p.jpg';
+
+      self.app.log.debug('(Squeezebox) : about to send media object with %s',JSON.stringify(self.devices.mediaObject._data));
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+      self.devices.coverArt.write(e);
     });
   });
 
+  //playlist tells us the track has changed - we only listen to playlist open
+  //and then trigger us to get the track details
   'playlist'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      self.app.log.debug('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
+      
       if (e === 'playlist pause 0') {
-        //console.log('**** nb emit logitech un pause on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
         self.devices.displayPlay.emit('data', 'playlist is '+e);
-      } else if (startsWith("playlist open file", e)) {
+      } else if (startsWith("playlist open", e)) {
         var mediaFileName = e.substr(14,(e.length-14));
+        //console.log('*** about to get playlist openfile songinfo for %s', mediaFileName);
         player.getSongInfo(mediaFileName);
-        //console.log('**** nb emit logitech playlist file on %s for %s with file as %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,mediaFileName);        
-      } else {
+      // } else {
         //console.log('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.displayName.guid,eventName,e);
-        self.devices.displayPlay.emit('data', 'playlist is '+e);
+        //self.devices.mediaObject._data.state.track_id = e;
+        //self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+      //  self.devices.displayPlay.emit('data', 'playlist is '+e);
       }
     });
   });
 
+  // this is the path for the track
+  'path'
+  .split(',').forEach(  function listenToNotification(eventName) {
+    player.on(eventName, function(e) {
+      
+      self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,e);
+      var mediaFileName = e.substr(14,(e.length-14));
+      console.log('about to get playlist openfile songinfo for %s', mediaFileName);
+      player.getSongInfo(mediaFileName);
+      self.devices.displayPlay.emit('data', 'playlist is '+e);
+    });
+  });
+
+  // does what it says
   'volume'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      //console.log('**** nb emit logitech event on %s for %s with value %s compensated to %s',mac.toUpperCase()+'-*-'+self.devices.soundVolume.guid,eventName,e,player.getNoiseLevel());      
-      //allow volume to compensate if switched off
+      self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
       self.devices.soundVolume.emit('data',player.getNoiseLevel());
     });
   });
 
-  'powerState'
+  // set subscriptions to each of the events
+  'power'//State,power'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //console.log('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      var _state = e.substr(20,(e.length-20));
-      //console.log('old is %s : new is %s',e,_state);
-      //console.log('**** nb emit powerState event on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.devices.soundVolume.guid,eventName,_state);      
+      console.log('e for %s is this: %s',eventName, e);
+      var _state = e==1 ? 'on' : 'off';
+      console.log('old is %s : new is %s',e,_state);
+
+      // if switched off - reset everything
+      if (!e) {
+        console.log('switching off...');
+        self.devices.mediaObject._data.state.track_id = null;
+        self.devices.mediaObject._data.state.volume = 0;
+        self.devices.mediaObject._data.state.position = null;
+        self.devices.mediaObject._data.state.state = "off";
+
+        self.devices.mediaObject._data.track.name = 'Player is off';
+        self.devices.mediaObject._data.track.artist = '';
+        self.devices.mediaObject._data.track.album = '';
+        self.devices.mediaObject._data.track.disc_number = '';
+        self.devices.mediaObject._data.track.track_number = '';
+        self.devices.mediaObject._data.track.id = '';
+        self.devices.mediaObject._data.state.track_id = '';
+        self.devices.mediaObject._data.track.album_artist = null;
+        self.devices.mediaObject._data.track.squeeze_url = null;
+        self.devices.mediaObject._data.image = null;
+        self.devices.mediaObject.write('data',self.devices.mediaObject._data)
+        //self.devices.coverArt.write(e);
+
+       } //else {
+       //player.getPlayerSong();
+      // }
+      //console.log('about to send media object with %s',self.devices.mediaObject._data);
       self.devices.powerState.emit('data',_state);
     });
   });
 
 
+// these the device types
 
   function hid() {
     this.readable = true;
@@ -238,6 +286,11 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     this._name = ' - HID';
   }
   util.inherits(hid, stream);
+  hid.prototype.write = function(data) {
+    self._app.log.debug('Squeezebox - received text to display for %s : %s', this.G, data);
+    //self._xbmc.message(data);
+    return true;
+  };
 
   function displayText(qual) {
     this.readable = true;
@@ -290,6 +343,47 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     return true;
   };
 
+  function mediaObject() {
+    this.readable = true;
+    this.writeable = false;
+    this.V = 0;
+    this.D = 280;
+    this.G = 'LMSMO'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
+    //this.G = self.mac;
+    this._name = ' - MediaObject';
+    this._data = {
+      "state":{
+        "track_id":"",
+        "volume":0,
+        "position":0,
+        "state":"off"
+      },
+      "track":{
+        "artist":"",
+        "album":"",
+        "disc_number":0,
+        "duration":0,
+        "played_count":0,
+        "track_number":0,
+        "starred":false,
+        "popularity":0,
+        "id":"",
+        "name":"",
+        "album_artist":"",
+        "spotify_url":""
+      },
+      "image":""
+    };
+//    console.log(this._data);
+  }
+  util.inherits(mediaObject, stream);
+  mediaObject.prototype.write = function(data) {
+    //self._app.log.debug('Squeezebox - media object for %s : %s : %s', this.G, data, JSON.stringify(this._data));
+    //self._app.log.debug('see the image at %s',self.devices.mediaObject._data.image);
+    //self._xbmc.message(data);
+    return true;
+  };
+
   function camera(host) {
     this.writeable = true;
     this.readable = true;
@@ -306,7 +400,9 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   camera.prototype.write = function(data) {
 //  camera.prototype.write = function() {
     // self._app.log.debug('Squeezebox - received camera for %s : %s', this.G, data);
-console.log('Squeezebox - received camera for %s : %s', this.G, data);
+    //self._app.log.debug('see the image at %s',self.devices.mediaObject._data.image);
+    //console.log('see the image at %s',self.devices.mediaObject._data.image);
+  //console.log('Squeezebox - received camera for %s : %s', this.G, data);
 
     var postOptions = {
       host:self.app.opts.streamHost,
@@ -317,37 +413,37 @@ console.log('Squeezebox - received camera for %s : %s', this.G, data);
       method:'POST'
     };
 
-    console.log(JSON.stringify(postOptions));
+    //console.log(JSON.stringify(postOptions));
 
     var proto = (self.app.opts.streamPort==443) ? https:http;
 
-    console.log('Requesting current playing');
+    //console.log('Requesting current playing');
 
-//          var thumbnail = "http://" + this.host + ':9000/music/' + encodeURIComponent(songId) + '/cover.jpg';
-          var thumbnail = "http://" + this.host + ':9000/music/current/cover.jpg?player=' + this.playerName;
+// //          var thumbnail = "http://" + this.host + ':9000/music/' + encodeURIComponent(songId) + '/cover.jpg';
+//           var thumbnail = self.devices.mediaObject._data.image;
 
-          console.log('Sending thumbnail : ' + thumbnail);
+//           //console.log('Sending thumbnail : ' + thumbnail);
 
-          var getReq = http.get(thumbnail,function(getRes) {
+          var getReq = http.get(self.devices.mediaObject._data.image,function(getRes) {
 
   
-  postOptions.headers = {
+            postOptions.headers = {
 
-    'Content-Type' : 'image/jpeg'
-    , 'Expires' : 'Mon, 3 Jan 2000 12:34:56 GMT'
-    , 'Pragma' : 'no-cache'
-    , 'transfer-encoding' : 'chunked'
-    , 'Connection' : 'keep-alive'
-    , 'X-Ninja-Token' : self.app.token
-  };
+              'Content-Type' : 'image/jpeg'
+              , 'Expires' : 'Mon, 3 Jan 2000 12:34:56 GMT'
+              , 'Pragma' : 'no-cache'
+              , 'transfer-encoding' : 'chunked'
+              , 'Connection' : 'keep-alive'
+              , 'X-Ninja-Token' : self.app.token
+            };
             //postOptions.headers = getRes.headers;
             //postOptions.headers['X-Ninja-Token'] = self.app.token;
-            console.log('token', self.app.token);
+            //console.log('token', self.app.token);
 
             var postReq = proto.request(postOptions,function(postRes) {
 
               postRes.on('end',function() {
-                console.log('Stream Server ended');
+                //console.log('Stream Server ended');
               });
               postRes.resume();
             });
@@ -365,7 +461,7 @@ console.log('Squeezebox - received camera for %s : %s', this.G, data);
 
             getRes.on('end',function() {
               postReq.end();
-              console.log("Image sent %s",lenWrote);
+              //console.log("Image sent %s",lenWrote);
             });
             getRes.resume();
           });
@@ -379,6 +475,7 @@ console.log('Squeezebox - received camera for %s : %s', this.G, data);
     return true;
   };
 
+// These are the devices created from device types
 
   this.devices = {
     hid: new hid(),
@@ -387,20 +484,12 @@ console.log('Squeezebox - received camera for %s : %s', this.G, data);
     displayName: new displayText('name'),
     displayPlay: new displayText('play'),
     coverArt: new camera(host),
-    displayProp: new displayText('prop')
+    displayProp: new displayText('prop'),
+    mediaObject: new mediaObject()
   };
   //console.log(JSON.stringify(this.devices));
 }
 
-// LMSDevice.prototype.getInfoLabels = function(labels, cb) {
-// log('xxx', labels);
-//   // this._lms.player.api.send('XBMC.GetInfoLabels', {
-//   //   labels: labels
-//   // }).then(function(data) {
-//   //   log('xxx', data);
-//   //   cb(data.result);
-//   // });
-// };
 
 // a couple of helpers
 
