@@ -30,8 +30,6 @@ if (!enabled) {
   this._devices = [];
   var self = this;
 
-  host = opts.lmsip;
-  
   app.once('client::up',function(){
 
     if (!opts.hasSentAnnouncement) {
@@ -47,9 +45,14 @@ if (!enabled) {
       opts.lmsname = lmsname;
       self.save();
     }
+    if (!opts.remote_url) {
+      opts.remote_url = remote_url;
+      self.save();
+    }
 
-    self._app.log.info('(Squeezebox) Scanning %s...',opts.lmsip);
-    self.scan(opts.lmsip,opts.lmsname,app);
+    self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
+    //self.scan(opts.lmsip,opts.lmsname,app);
+    self.scan(opts,app);
     self._devices.forEach(function(player) {
       self._app.log.debug('(Squeezebox) : going to lister  on player %s', player.id);      
       player.on("logitech_event", function(p) {
@@ -69,11 +72,11 @@ driver.prototype.config = function(rpc,cb) {
   // If its to rescan - just do it straight away
   // Otherwise, we will try action the rpc method
   if (!rpc) {
-    return configHandlers.menu.call(this,this._opts.lmsip,lmsname,cb);
+    return configHandlers.menu.call(this,this._opts.lmsip,this._opts.lmsname,this._opts.remote_url,this._opts.enabled,cb);
   }
   else if (rpc.method === 'scan') {
     self._app.log.debug('(Squeezebox) : about to re-scan');
-    this.scan(opts.lmsip,opts.lmsname,app);
+    this.scan(opts,app);
   }
   else if (typeof configHandlers[rpc.method] === "function") {
     return configHandlers[rpc.method].call(this,this._opts,rpc.params,cb);
@@ -84,15 +87,15 @@ driver.prototype.config = function(rpc,cb) {
 };
 
 
-driver.prototype.scan = function(host, name, app) {
+driver.prototype.scan = function(opts, app) {
 
   var self = this;
-  this.host = host;
-  this.name = name && name.length > 0? name : host;
+  this.host = opts.lmsip;
+  this.name = opts.lmsname && opts.lmsname.length > 0? opts.lmsname : opts.lmsip;
   this.app = app;
 
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
-  var lms = new LogitechMediaServer(host);
+  var lms = new LogitechMediaServer(this.host);
 
   lms.on("registration_finished", function() {
 
@@ -100,7 +103,7 @@ driver.prototype.scan = function(host, name, app) {
     self._app.log.debug('(Squeezebox) : Connection completed to Logitech Media Server Host, found %s players', playerCount);
     Object.keys(lms.players).forEach(function(data){
       self._app.log.debug('(Squeezebox) : Logitech player found at %s, adding to collection', data.toUpperCase());
-      self.add(host, name, lms, data);
+      self.add(opts, lms, data);
       self._app.log.debug('(Squeezebox) : Logitech player found at %s, now added', data.toUpperCase());
     })
   });
@@ -108,9 +111,9 @@ driver.prototype.scan = function(host, name, app) {
   lms.start();
 };
 
-driver.prototype.add = function(host, name, lms, mac) {
+driver.prototype.add = function(opts, lms, mac) {
   var self = this;
-  var _lmsDevice = new LMSDevice(host, name, self._app, lms, mac, self);
+  var _lmsDevice = new LMSDevice(opts, self._app, lms, mac, self);
   // var _lmsDevice = new LMSDevice(host, lms.players[mac].name, self._app, lms, mac);
   self._devices.push(_lmsDevice);
 
@@ -125,14 +128,15 @@ driver.prototype.add = function(host, name, lms, mac) {
 
 module.exports = driver;
 
-function LMSDevice(host, name, app, lms, mac, emitter) {
+function LMSDevice(opts, app, lms, mac, emitter) {
 
   var self = this;
   //self.name = name.toUpperCase()+':'+mac;
   self.mac = mac;
 
   this.app = app;
-  this.host = host;
+  this.host = opts.lmsip;
+  this.name = opts.lmsname;
 
   // set this collection of devices to a unique squeezebox
   player = lms.players[mac];
@@ -156,7 +160,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     player.on(eventName, function(e) {
       if (self.name != e) {
         Object.keys(self.devices).forEach(function(id) {
-          self.app.log.debug('(Squeezebox) : Adding sub-device',host, self.devices[id]._name, id, self.devices[id].G);
+          self.app.log.debug('(Squeezebox) : Adding sub-device',this.host, self.devices[id]._name, id, self.devices[id].G);
           self.devices[id].name = self.name+self.devices[id]._name;
           //self.app.log.debug('(Squeezebox) : Device is %s', JSON.stringify(self.devices[id]));
           emitter.emit('register', self.devices[id]);
@@ -180,6 +184,8 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
+      self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
+      
       self.devices.mediaObject._data.track.name = e.title;
       self.devices.mediaObject._data.track.artist = e.artist;
       self.devices.mediaObject._data.track.album = e.album;
@@ -190,11 +196,11 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
       self.devices.mediaObject._data.state.track_id = e.id;
       self.devices.mediaObject._data.track.album_artist = e.artist;
       self.devices.mediaObject._data.track.squeeze_url = e.file;
-      self.devices.mediaObject._data.image = 'http://' + host + ':9000/music/' + e.coverid + '/cover_375x375_p.jpg';
+      self.devices.mediaObject._data.image = 'http://' + opts.remote_url + ':9000/music/' + e.coverid + '/cover_375x375_p.jpg';
 
-      self.app.log.debug('(Squeezebox) : about to send media object...');
+      //self.app.log.debug('(Squeezebox) : about to send media object...');
       // uncomment to see the media object being sent
-      //self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
+      self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
       //self.devices.coverArt.write(e);
     });
@@ -252,7 +258,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
           self.devices.mediaObject._data.state.nextmode = 'Play'          
         }
       }
-      
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
       //player.getSongInfo('file:'+e.file);
     });
   });
@@ -262,10 +268,10 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
       self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
-      self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
-      self.app.log.debug('(Squeezebox) : Volumes is %s',player.getNoiseLevel());
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+      self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
       //self.devices.soundVolume.emit('data',player.getNoiseLevel());
-      self.devices.mediaObject.write('data',self.devices.mediaObject._data)
+      //self.devices.mediaObject.write('data',self.devices.mediaObject._data)
     });
   });
 
@@ -298,7 +304,8 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
         self.devices.mediaObject._data.track.album_artist = null;
         self.devices.mediaObject._data.track.squeeze_url = null;
         self.devices.mediaObject._data.image = null;
-        self.devices.mediaObject.write('data',self.devices.mediaObject._data)
+        self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+        //  self.devices.mediaObject.write('data',self.devices.mediaObject._data)
         //self.devices.coverArt.write(e);
 
        } else {
@@ -560,7 +567,7 @@ function LMSDevice(host, name, app, lms, mac, emitter) {
     // powerState: new switchState(),
     // displayName: new displayText('name'),
     // displayPlay: new displayText('play'),
-    coverArt: new camera(host),
+    coverArt: new camera(opts.lmsip),
     // displayProp: new displayText('prop'),
     mediaObject: new mediaObject()
   };
