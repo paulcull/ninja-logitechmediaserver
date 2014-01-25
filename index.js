@@ -167,6 +167,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
           self.name = e;
 
         });
+        player.getPlayerSong();
       } else
       { 
           self.app.log.debug('In this part of the code for LMS - I shouldnt be here');
@@ -184,7 +185,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
-      self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
+      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
       
       self.devices.mediaObject._data.track.name = e.title;
       self.devices.mediaObject._data.track.artist = e.artist;
@@ -198,9 +199,9 @@ function LMSDevice(opts, app, lms, mac, emitter) {
       self.devices.mediaObject._data.track.squeeze_url = e.file;
       self.devices.mediaObject._data.image = 'http://' + opts.remote_url + ':9000/music/' + e.coverid + '/cover_375x375_p.jpg';
 
-      //self.app.log.debug('(Squeezebox) : about to send media object...');
+      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
       // uncomment to see the media object being sent
-      self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
+     // self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
       //self.devices.coverArt.write(e);
     });
@@ -254,10 +255,11 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.state.nextmode = 'Pause'
         if (self.devices.mediaObject._data.state.state === 'off') {
           self.devices.mediaObject._data.state.nextmode = '-'
-        } else {
-          self.devices.mediaObject._data.state.nextmode = 'Play'          
-        }
+        } 
+      } else {
+        self.devices.mediaObject._data.state.nextmode = 'Play'          
       }
+      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
       //player.getSongInfo('file:'+e.file);
     });
@@ -268,6 +270,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
       self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
+      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);      
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
       self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
       //self.devices.soundVolume.emit('data',player.getNoiseLevel());
@@ -303,7 +306,9 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.state.track_id = '';
         self.devices.mediaObject._data.track.album_artist = null;
         self.devices.mediaObject._data.track.squeeze_url = null;
-        self.devices.mediaObject._data.image = null;
+        self.devices.mediaObject._data.image = 'null';
+
+        self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
         //  self.devices.mediaObject.write('data',self.devices.mediaObject._data)
         //self.devices.coverArt.write(e);
@@ -420,7 +425,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         "album_artist":"",
         "spotify_url":""
       },
-      "image":""
+      "image":"."
     };
 //    console.log(this._data);
   }

@@ -2,8 +2,8 @@ ninja-logitechmediaserver
 =========================
 
 Author: Paul Cullender
-Version: 1.0
-Status: alpha
+Version: 0.8
+Status: beta
 License: BSD
 
 
@@ -16,6 +16,11 @@ This version shows the names and what the status of the LMS Players are.
 1. Detects each Squeeze player attached to the server
 2. Shows the status of each play
 3. Displays the volume level for each one.
+4. Provides a media profile back to the ninja cloud to show details of what's playing (see note below)
+5. Allows the player to be actuated for Volume up and down, on/off fwd & back tracks
+
+New dashboard widget gist is here
+https://gist.github.com/paulcull/e41250e68a6146d32052
 
 ###Wiki Entry
 [TBD]
@@ -37,12 +42,20 @@ ninja_install -g git@github.com:paulcull/ninja-logitechmediaserver.git (Requires
 2. git clone git://github.com/paulcull/ninja-logitechmediaserver.git
 3. cd ninja-logitechmediaserver && npm install
 
+Note: if you want the coverart to show, you will need to expose the logitech server directly to the web. Port 9000 on the host machine mapped on you router.
+
 ###History
 
-v0.0.1
+v0.8
 ======
 
-Drivers cannot (yet) set the device name when registering, so the nickname is only used in the guid. @dan has promised to see if he can make it happen "soon" though =)
+Completely changed the devices approach for this version. Now only has a main media device. This is updated and published to the cloud on the changes to states of the players. May be a bit 'chatty' but seems responsive enough. Would appreciate any feedback on larger installation.
+
+Coverart is a 'pull' from the cloud. I've left in a stub for a 'push' which would remove the need for the server being opened up to the internet, but not got it working yet.
+
+I've forked the node-logitechmediaserver to add more interactions, but not significantly changed anything else.
+
+I've got a couple of Rasperry Pi's running the software squeezeplayer, and they are working fine with this.
 
 Give it a go, tell me if works for you and I'll get onto writing the part to actuate the players.
 
