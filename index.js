@@ -12,7 +12,8 @@ var LogitechMediaServer = require('logitechmediaserver'),
 var log = console.log;
 var lmsip = 'localhost';
 var lmsname = 'HOME';
-var enabled = true;
+remote_url = 'localhost';
+var enabled = false;
 
 util.inherits(driver,stream);
 util.inherits(LMSDevice,stream);
@@ -54,7 +55,7 @@ if (!enabled) {
     //self.scan(opts.lmsip,opts.lmsname,app);
     self.scan(opts,app);
     self._devices.forEach(function(player) {
-      self._app.log.debug('(Squeezebox) : going to lister  on player %s', player.id);      
+      self._app.log.debug('(Squeezebox) : going to listen  on player %s', player.id);      
       player.on("logitech_event", function(p) {
         self._app.log.debug('(Squeezebox) : logitech_event player num %s with event %s', player.id,p);      
       });
@@ -402,6 +403,15 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     this.G = 'LMSMO'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     //this.G = self.mac;
     this._name = ' - MediaObject';
+     this._features = {
+      "play":true,
+      "pause":true,
+      "rew":true,
+      "ffd":true,
+      "onoff":true,
+      "volup":true,
+      "voldown":true 
+    },
     this._data = {
       "state":{
         "track_id":"",

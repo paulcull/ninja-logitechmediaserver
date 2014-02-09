@@ -2,7 +2,7 @@ ninja-logitechmediaserver
 =========================
 
 Author: Paul Cullender
-Version: 0.8
+Version: 0.2
 Status: beta
 License: BSD
 
@@ -46,7 +46,7 @@ Note: if you want the coverart to show, you will need to expose the logitech ser
 
 ###History
 
-v0.8
+v0.2
 ======
 
 Completely changed the devices approach for this version. Now only has a main media device. This is updated and published to the cloud on the changes to states of the players. May be a bit 'chatty' but seems responsive enough. Would appreciate any feedback on larger installation.
