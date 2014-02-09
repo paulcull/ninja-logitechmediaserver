@@ -13,7 +13,8 @@ var log = console.log;
 var lmsip = 'localhost';
 var lmsname = 'HOME';
 remote_url = 'localhost';
-var enabled = false;
+spotify_url_start = 'https://embed.spotify.com/oembed/?url='
+var enabled = true;
 
 util.inherits(driver,stream);
 util.inherits(LMSDevice,stream);
@@ -166,8 +167,9 @@ function LMSDevice(opts, app, lms, mac, emitter) {
           //self.app.log.debug('(Squeezebox) : Device is %s', JSON.stringify(self.devices[id]));
           emitter.emit('register', self.devices[id]);
           self.name = e;
-
         });
+        self.devices.mediaObject._data.state.player_name = self.name + ' - Logitech Player';
+        self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
         player.getPlayerSong();
       } else
       { 
@@ -214,6 +216,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   .split(',').forEach(  function listenToNotification(eventName) {
     _lastevent = '';
     player.on(eventName, function(e) {
+      //console.log('playlist event payload is: %s',e);
       if (e != _lastevent) {
         if (e === 'playlist pause 0') {
           //self.devices.displayPlay.emit('data', 'playlist is '+e);
@@ -239,9 +242,18 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   'song_path,path'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
+      self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
-      player.getSongInfo('file:'+e.file);
+      if (e.search('spotify') == -1) {
+        player.getSongInfo('file:'+e.file);
+
+        // TODO Add the spotify get details
+        // https://embed.spotify.com/oembed/?url=spotify:track:5HSqCeDCn2EEGR5ORwaHA0
+        // where 5HSqCeDCn2EEGR5ORwaHA0 is the track_id
+      // } else {
+      //   var _spotInfo = request()
+      //   //player.getSongInfo
+      }
     });
   });
 
@@ -289,7 +301,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
       self.app.log.debug('(Squeezebox) : Power old is %s : new is %s',e,_state);
       // if switched off - reset everything
       if (!e) {
-        console.log('switching off...');
+        //console.log('switching off...');
         self.devices.mediaObject._data.state.track_id = null;
         self.devices.mediaObject._data.state.volume = 0;
         self.devices.mediaObject._data.state.position = null;
@@ -414,6 +426,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     },
     this._data = {
       "state":{
+        "player_name":"",
         "track_id":"",
         "volume":0,
         "position":0,
@@ -521,7 +534,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
 // //          var thumbnail = "http://" + this.host + ':9000/music/' + encodeURIComponent(songId) + '/cover.jpg';
            var thumbnail = self.devices.mediaObject._data.image;
 
-           console.log('Sending thumbnail : ' + thumbnail);
+           //console.log('Sending thumbnail : ' + thumbnail);
 
           var getReq = http.get(self.devices.mediaObject._data.image,function(getRes) {
 
@@ -560,7 +573,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
 
             getRes.on('end',function() {
               postReq.end();
-              console.log("Image sent %s",lenWrote);
+              //console.log("Image sent %s",lenWrote);
             });
             getRes.resume();
           });
