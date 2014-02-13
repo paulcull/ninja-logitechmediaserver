@@ -13,7 +13,8 @@ var log = console.log;
 var lmsip = 'localhost';
 var lmsname = 'HOME';
 remote_url = 'localhost';
-spotify_url_start = 'https://embed.spotify.com/oembed/?url='
+spotify_url_start = '/oembed/?url=spotify:track:'
+spotify_host = 'embed.spotify.com'
 var enabled = true;
 
 util.inherits(driver,stream);
@@ -168,7 +169,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
           emitter.emit('register', self.devices[id]);
           self.name = e;
         });
-        self.devices.mediaObject._data.state.player_name = self.name + ' - Logitech Player';
+        self.devices.mediaObject._data.state.player_name = self.name;
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
         player.getPlayerSong();
       } else
@@ -200,6 +201,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
       self.devices.mediaObject._data.state.track_id = e.id;
       self.devices.mediaObject._data.track.album_artist = e.artist;
       self.devices.mediaObject._data.track.squeeze_url = e.file;
+      self.devices.mediaObject._data.track.spotify_url = '';
       self.devices.mediaObject._data.image = 'http://' + opts.remote_url + ':9000/music/' + e.coverid + '/cover_375x375_p.jpg';
 
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
@@ -207,6 +209,52 @@ function LMSDevice(opts, app, lms, mac, emitter) {
      // self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
       //self.devices.coverArt.write(e);
+    });
+  });
+
+  //songinfo has all the track details
+  'spotify_details'
+  .split(',').forEach(  function listenToNotification(eventName) {
+    player.on(eventName, function(e) {
+      //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
+      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
+      //self.app.log.debug('(Squeezebox) : spotify URL is %s',spotify_host+spotify_url_start+e.id);
+      
+      var get_options = {
+        hostname: spotify_host,
+        path: spotify_url_start+e.id,
+        method: 'GET'
+      };
+
+      var req = https.get(get_options, function(res) {
+        //console.log("Got response: " + res.statusCode);
+        //console.log(res);
+        res.on('data',function(chunk){
+          var _spotData = JSON.parse(chunk);
+
+          self.devices.mediaObject._data.track.name = _spotData.title;
+          self.devices.mediaObject._data.track.artist = '';
+          self.devices.mediaObject._data.track.album = '';
+          self.devices.mediaObject._data.track.disc_number = '';
+          self.devices.mediaObject._data.track.track_number = '';
+          self.devices.mediaObject._data.track.duration = '';
+          self.devices.mediaObject._data.track.id = e.id;
+          self.devices.mediaObject._data.state.track_id = e.id;
+          self.devices.mediaObject._data.track.album_artist = e.artist;
+          self.devices.mediaObject._data.track.squeeze_url = '';
+          self.devices.mediaObject._data.track.spotify_url = spotify_host+spotify_url_start+e.id;
+          self.devices.mediaObject._data.image = _spotData.thumbnail_url;
+
+          self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+          // uncomment to see the media object being sent
+         //self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
+         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+
+        });
+      });
+      req.on('error', function(e) {
+        self.app.log.error('(Squeezebox) : Got error: ' + e.message);
+      });
     });
   });
 
@@ -223,13 +271,16 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         } else if (startsWith("playlist newsong", e)) {
           self.app.log.debug('(Squeezebox) : Playlist song');
           player.getPlayerSong();
+        } else if (startsWith("playlist play", e)) {
+          self.app.log.debug('(Squeezebox) : Playlist play');
+          player.getPlayerSong();
         } else if (startsWith("playlist open", e)) {
           self.app.log.debug('(Squeezebox) : New Playlist');
           var mediaFileName = e.substr(14,(e.length-14));
           //console.log('*** about to get playlist openfile songinfo for %s', mediaFileName);
           player.getSongInfo(mediaFileName);
         } else {
-          console.log('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.name,eventName,e);
+          //console.log('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.name,eventName,e);
           //self.devices.mediaObject._data.state.track_id = e;
           //self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
           //self.devices.displayPlay.emit('data', 'playlist is '+e);
@@ -242,9 +293,9 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   'song_path,path'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
+      //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
-      if (e.search('spotify') == -1) {
+      if (e.file.search('spotify') == -1) {
         player.getSongInfo('file:'+e.file);
 
         // TODO Add the spotify get details
@@ -252,7 +303,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         // where 5HSqCeDCn2EEGR5ORwaHA0 is the track_id
       // } else {
       //   var _spotInfo = request()
-      //   //player.getSongInfo
+        //player.getSongInfo
       }
     });
   });
@@ -319,6 +370,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.state.track_id = '';
         self.devices.mediaObject._data.track.album_artist = null;
         self.devices.mediaObject._data.track.squeeze_url = null;
+        self.devices.mediaObject._data.track.spotify_url = null;
         self.devices.mediaObject._data.image = 'null';
 
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
@@ -496,96 +548,96 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     return true;
   };
 
-  function camera(host) {
-    this.writeable = true;
-    this.readable = true;
-    this.playerName = self.mac;
-    this.V = 0;
-    this.D = 1004;
-    //this.G = self.mac;
-    this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
-    this._guid = [self.app.id,this.G,this.V,this.D].join('_');
-    this._name = " - Cover Art Viewer";
-    this.host = host;
-  }
-  util.inherits(camera, stream);
-  camera.prototype.write = function(data) {
-//  camera.prototype.write = function() {
-    // self._app.log.debug('Squeezebox - received camera for %s : %s', this.G, data);
-    // self._app.log.debug('see the image at %s',self.devices.mediaObject._data.image);
-    //console.log('see the image at %s',self.devices.mediaObject._data.image);
-  console.log('Squeezebox - received camera for %s : %s', this.G, JSON.stringify(data));
+//   function camera(host) {
+//     this.writeable = true;
+//     this.readable = true;
+//     this.playerName = self.mac;
+//     this.V = 0;
+//     this.D = 1004;
+//     //this.G = self.mac;
+//     this.G = 'LMSD'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
+//     this._guid = [self.app.id,this.G,this.V,this.D].join('_');
+//     this._name = " - Cover Art Viewer";
+//     this.host = host;
+//   }
+//   util.inherits(camera, stream);
+//   camera.prototype.write = function(data) {
+// //  camera.prototype.write = function() {
+//     // self._app.log.debug('Squeezebox - received camera for %s : %s', this.G, data);
+//     // self._app.log.debug('see the image at %s',self.devices.mediaObject._data.image);
+//     //console.log('see the image at %s',self.devices.mediaObject._data.image);
+//   console.log('Squeezebox - received camera for %s : %s', this.G, JSON.stringify(data));
 
-    var postOptions = {
-      host:self.app.opts.streamHost,
-      port:self.app.opts.streamPort,
-      // host:lmsip,
-      // port:9000,
-      path:'/rest/v0/camera/'+this._guid+'/snapshot',
-      method:'POST'
-    };
+//     var postOptions = {
+//       host:self.app.opts.streamHost,
+//       port:self.app.opts.streamPort,
+//       // host:lmsip,
+//       // port:9000,
+//       path:'/rest/v0/camera/'+this._guid+'/snapshot',
+//       method:'POST'
+//     };
 
-    //console.log(JSON.stringify(postOptions));
+//     //console.log(JSON.stringify(postOptions));
 
-    var proto = (self.app.opts.streamPort==443) ? https:http;
+//     var proto = (self.app.opts.streamPort==443) ? https:http;
 
-    //console.log('Requesting current playing');
+//     //console.log('Requesting current playing');
 
-// //          var thumbnail = "http://" + this.host + ':9000/music/' + encodeURIComponent(songId) + '/cover.jpg';
-           var thumbnail = self.devices.mediaObject._data.image;
+// // //          var thumbnail = "http://" + this.host + ':9000/music/' + encodeURIComponent(songId) + '/cover.jpg';
+//            var thumbnail = self.devices.mediaObject._data.image;
 
-           //console.log('Sending thumbnail : ' + thumbnail);
+//            //console.log('Sending thumbnail : ' + thumbnail);
 
-          var getReq = http.get(self.devices.mediaObject._data.image,function(getRes) {
+//           var getReq = http.get(self.devices.mediaObject._data.image,function(getRes) {
 
   
-            postOptions.headers = {
+//             postOptions.headers = {
 
-              'Content-Type' : 'image/jpeg'
-              , 'Expires' : 'Mon, 3 Jan 2000 12:34:56 GMT'
-              , 'Pragma' : 'no-cache'
-              , 'transfer-encoding' : 'chunked'
-              , 'Connection' : 'keep-alive'
-              , 'X-Ninja-Token' : self.app.token
-            };
-            //postOptions.headers = getRes.headers;
-            //postOptions.headers['X-Ninja-Token'] = self.app.token;
-            //console.log('token', self.app.token);
+//               'Content-Type' : 'image/jpeg'
+//               , 'Expires' : 'Mon, 3 Jan 2000 12:34:56 GMT'
+//               , 'Pragma' : 'no-cache'
+//               , 'transfer-encoding' : 'chunked'
+//               , 'Connection' : 'keep-alive'
+//               , 'X-Ninja-Token' : self.app.token
+//             };
+//             //postOptions.headers = getRes.headers;
+//             //postOptions.headers['X-Ninja-Token'] = self.app.token;
+//             //console.log('token', self.app.token);
 
-            var postReq = proto.request(postOptions,function(postRes) {
+//             var postReq = proto.request(postOptions,function(postRes) {
 
-              postRes.on('end',function() {
-                //console.log('Stream Server ended');
-              });
-              postRes.resume();
-            });
+//               postRes.on('end',function() {
+//                 //console.log('Stream Server ended');
+//               });
+//               postRes.resume();
+//             });
 
-            postReq.on('error',function(err) {
-              console.log('Error sending picture: ');
-              console.log(err);
-            });
+//             postReq.on('error',function(err) {
+//               console.log('Error sending picture: ');
+//               console.log(err);
+//             });
 
-            var lenWrote=0;
-            getRes.on('data',function(data) {
-              postReq.write(data,'binary');
-              lenWrote+=data.length;
-            });
+//             var lenWrote=0;
+//             getRes.on('data',function(data) {
+//               postReq.write(data,'binary');
+//               lenWrote+=data.length;
+//             });
 
-            getRes.on('end',function() {
-              postReq.end();
-              //console.log("Image sent %s",lenWrote);
-            });
-            getRes.resume();
-          });
-          getReq.on('error',function(error) {
-            console.log(error);
-          });
-          getReq.end();
+//             getRes.on('end',function() {
+//               postReq.end();
+//               //console.log("Image sent %s",lenWrote);
+//             });
+//             getRes.resume();
+//           });
+//           getReq.on('error',function(error) {
+//             console.log(error);
+//           });
+//           getReq.end();
 
-        //});
+//         //});
 
-    return true;
-  };
+//     return true;
+//   };
 
 // These are the devices created from device types
 
@@ -595,7 +647,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     // powerState: new switchState(),
     // displayName: new displayText('name'),
     // displayPlay: new displayText('play'),
-    coverArt: new camera(opts.lmsip),
+    // coverArt: new camera(opts.lmsip),
     // displayProp: new displayText('prop'),
     mediaObject: new mediaObject()
   };
