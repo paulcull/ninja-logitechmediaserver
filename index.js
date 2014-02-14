@@ -218,7 +218,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     player.on(eventName, function(e) {
       //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
-      //self.app.log.debug('(Squeezebox) : spotify URL is %s',spotify_host+spotify_url_start+e.id);
+      self.app.log.debug('(Squeezebox) : spotify URL is %s',spotify_host+spotify_url_start+e.id);
       
       var get_options = {
         hostname: spotify_host,
@@ -285,7 +285,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
           //self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
           //self.devices.displayPlay.emit('data', 'playlist is '+e);
         }
-        }
+      }
     });
   });
 
@@ -295,16 +295,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     player.on(eventName, function(e) {
       //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
-      if (e.file.search('spotify') == -1) {
-        player.getSongInfo('file:'+e.file);
-
-        // TODO Add the spotify get details
-        // https://embed.spotify.com/oembed/?url=spotify:track:5HSqCeDCn2EEGR5ORwaHA0
-        // where 5HSqCeDCn2EEGR5ORwaHA0 is the track_id
-      // } else {
-      //   var _spotInfo = request()
-        //player.getSongInfo
-      }
+      player.getSongInfo('file:'+e.file);
     });
   });
 
