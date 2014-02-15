@@ -9,23 +9,28 @@ var LogitechMediaServer = require('logitechmediaserver'),
 // ES: This code is horrid. Please fix it.
 // If Elliot says it horrid then it is
 
-var log = console.log;
+//these are in the config options, so replaced
 var lmsip = 'localhost';
 var lmsname = 'HOME';
-remote_url = 'localhost';
-spotify_url_start = '/oembed/?url=spotify:track:'
-spotify_host = 'embed.spotify.com'
+var remote_url = 'localhost';
+
+// these are constants
+var log = console.log;
+var spotify_url_start = '/oembed/?url=spotify:track:';
+var spotify_host = 'embed.spotify.com';
 var enabled = true;
 
+// stream links
 util.inherits(driver,stream);
 util.inherits(LMSDevice,stream);
 
 
 function driver(opts, app) {
 
-if (!enabled) {
-  app.log.info('(Squeezebox) Squeezebox driver is disabled');
-}
+//this doesn't work - waiting for the platform to support centrally
+// if (!enabled) {
+//   app.log.info('(Squeezebox) Squeezebox driver is disabled');
+// }
 
   this._app = app;
   this._opts = opts;
