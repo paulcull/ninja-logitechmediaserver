@@ -11,6 +11,7 @@ var LogitechMediaServer = require('logitechmediaserver'),
 
 //these are in the config options, so replaced
 var lmsip = 'localhost';
+var lmsport = '9000';
 var lmsname = 'HOME';
 var remote_url = 'localhost';
 
@@ -18,7 +19,6 @@ var remote_url = 'localhost';
 var log = console.log;
 var spotify_url_start = '/oembed/?url=spotify:track:';
 var spotify_host = 'embed.spotify.com';
-var enabled = true;
 
 // stream links
 util.inherits(driver,stream);
@@ -27,15 +27,11 @@ util.inherits(LMSDevice,stream);
 
 function driver(opts, app) {
 
-//this doesn't work - waiting for the platform to support centrally
-// if (!enabled) {
-//   app.log.info('(Squeezebox) Squeezebox driver is disabled');
-// }
-
   this._app = app;
   this._opts = opts;
 
   this._devices = [];
+  this._lms = null;
   var self = this;
 
   app.once('client::up',function(){
@@ -49,6 +45,10 @@ function driver(opts, app) {
       opts.lmsip = lmsip;
       self.save(); 
     }
+    if (!opts.lmsport) {
+      opts.lmsport = lmsport;
+      self.save(); 
+    }
     if (!opts.lmsname) {
       opts.lmsname = lmsname;
       self.save();
@@ -58,15 +58,14 @@ function driver(opts, app) {
       self.save();
     }
 
-    self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
     //self.scan(opts.lmsip,opts.lmsname,app);
     self.scan(opts,app);
-    self._devices.forEach(function(player) {
-      self._app.log.debug('(Squeezebox) : going to listen  on player %s', player.id);      
-      player.on("logitech_event", function(p) {
-        self._app.log.debug('(Squeezebox) : logitech_event player num %s with event %s', player.id,p);      
-      });
-    });
+    // self._devices.forEach(function(player) {
+    //   // self._app.log.debug('(Squeezebox) : going to listen  on player %s', player.id);      
+    //   // player.on("logitech_event", function(p) {
+    //   //   self._app.log.debug('(Squeezebox) : logitech_event player num %s with event %s', player.id,p);      
+    //   // });
+    // });
   });
 }
 
@@ -80,11 +79,11 @@ driver.prototype.config = function(rpc,cb) {
   // If its to rescan - just do it straight away
   // Otherwise, we will try action the rpc method
   if (!rpc) {
-    return configHandlers.menu.call(this,this._opts.lmsip,this._opts.lmsname,this._opts.remote_url,this._opts.enabled,cb);
+    return configHandlers.menu.call(this,this._opts.lmsip,this._opts.lmsport,this._opts.lmsname,this._opts.remote_url,cb);
   }
   else if (rpc.method === 'scan') {
     self._app.log.debug('(Squeezebox) : about to re-scan');
-    this.scan(opts,app);
+    this.scan(this._opts,this._app);
   }
   else if (typeof configHandlers[rpc.method] === "function") {
     return configHandlers[rpc.method].call(this,this._opts,rpc.params,cb);
@@ -98,12 +97,13 @@ driver.prototype.config = function(rpc,cb) {
 driver.prototype.scan = function(opts, app) {
 
   var self = this;
+  //this._lms = null;
   this.host = opts.lmsip;
   this.name = opts.lmsname && opts.lmsname.length > 0? opts.lmsname : opts.lmsip;
   this.app = app;
-
+  self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
-  var lms = new LogitechMediaServer(this.host);
+  lms = new LogitechMediaServer(this.host);
 
   lms.on("registration_finished", function() {
 
@@ -218,6 +218,52 @@ function LMSDevice(opts, app, lms, mac, emitter) {
   });
 
   //songinfo has all the track details
+  'radio_details'
+  .split(',').forEach(  function listenToNotification(eventName) {
+    player.on(eventName, function(e) {
+      self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
+      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
+  
+      self.devices.mediaObject._data.track.name = '';
+      self.devices.mediaObject._data.track.artist = 'Radio';
+      self.devices.mediaObject._data.track.album = '';
+      self.devices.mediaObject._data.track.disc_number = '';
+      self.devices.mediaObject._data.track.track_number = '';
+      self.devices.mediaObject._data.track.duration = '';
+      self.devices.mediaObject._data.track.id = e.id;
+      self.devices.mediaObject._data.state.track_id = e.id;
+      self.devices.mediaObject._data.track.album_artist = '';
+      self.devices.mediaObject._data.track.squeeze_url = e.radio_path;
+      self.devices.mediaObject._data.track.source = e.source;
+      self.devices.mediaObject._data.track.spotify_url = '';
+      self.devices.mediaObject._data.image = ' ';
+
+      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+      // uncomment to see the media object being sent
+     // self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+      //self.devices.coverArt.write(e);
+    });
+  });
+
+  //songinfo has all the track details
+  'current_details'
+  .split(',').forEach(  function listenToNotification(eventName) {
+    player.on(eventName, function(e) {
+      self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
+      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
+      if (self.devices.mediaObject._data.track.source == 'radio') {
+        self.devices.mediaObject._data.track.name = e;
+        self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+        // uncomment to see the media object being sent
+       // self.app.log.debug('(Squeezebox) : object : %s',JSON.stringify(self.devices.mediaObject._data));
+        self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+        //self.devices.coverArt.write(e);
+      }
+    });
+  });
+
+  //songinfo has all the track details
   'spotify_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
@@ -247,6 +293,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
           self.devices.mediaObject._data.state.track_id = e.id;
           self.devices.mediaObject._data.track.album_artist = e.artist;
           self.devices.mediaObject._data.track.squeeze_url = '';
+          self.devices.mediaObject._data.track.source = e.source;
           self.devices.mediaObject._data.track.spotify_url = spotify_host+spotify_url_start+e.id;
           self.devices.mediaObject._data.image = _spotData.thumbnail_url;
 
@@ -353,6 +400,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.state.volume = 0;
         self.devices.mediaObject._data.state.position = null;
         self.devices.mediaObject._data.state.state = "off";
+        self.devices.mediaObject._data.state.nextstate = "On";
         self.devices.mediaObject._data.track.duration = 0;
         self.devices.mediaObject._data.state.mode = "off"
         self.devices.mediaObject._data.state.nextmode = "-"
@@ -367,6 +415,8 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.track.album_artist = null;
         self.devices.mediaObject._data.track.squeeze_url = null;
         self.devices.mediaObject._data.track.spotify_url = null;
+        self.devices.mediaObject._data.track.source = null;
+
         self.devices.mediaObject._data.image = 'null';
 
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
@@ -376,6 +426,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
 
        } else {
         self.devices.mediaObject._data.state.state = 'on';
+        self.devices.mediaObject._data.state.nextstate = 'Off';        
         self.devices.mediaObject._data.state.volume = player.getNoiseLevel()
        player.getPlayerSong();
 
@@ -479,6 +530,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         "volume":0,
         "position":0,
         "state":"off",
+        "nextstate": "on",
         "mode":"off",
         "nextmode":"-"
       },
@@ -494,7 +546,8 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         "id":"",
         "name":"",
         "album_artist":"",
-        "spotify_url":""
+        "spotify_url":"",
+        "source":""
       },
       "image":"."
     };
