@@ -11,12 +11,9 @@ var LogitechMediaServer = require('logitechmediaserver'),
 // If Elliot says it horrid then it is
 
 //these are in the config options, so replaced
-// var lmsip = 'localhost';
-// var lmsport = '9000';
-// var lmsname = 'HOME';
-var lmsip = '192.168.1.85';
-var lmsport = '9001';
-var lmsname = 'QNAP';
+var lmsip = 'localhost';
+var lmsport = '9000';
+var lmsname = 'HOME';
 var remote_url = 'localhost';
 
 // these are constants
@@ -92,7 +89,7 @@ driver.prototype.scan = function(opts, app) {
   this.host = opts.lmsip;
   this.name = opts.lmsname && opts.lmsname.length > 0? opts.lmsname : opts.lmsip;
   this.app = app;
-  self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
+  //self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
   lms = new LogitechMediaServer(this.host);
   //
