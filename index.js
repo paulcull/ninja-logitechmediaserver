@@ -106,6 +106,9 @@ driver.prototype.scan = function(opts, app) {
       self._app.log.debug('(Squeezebox) : Logitech player found at %s, now added', data.toUpperCase());
     })
   });
+  lms.on("lms_log", function(e) {
+    self._app.log.debug('(Squeezebox) : Raw Log :', e);
+  });
   //Start up the LMS scanner
   lms.start();
 };
