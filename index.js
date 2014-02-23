@@ -13,6 +13,7 @@ var LogitechMediaServer = require('logitechmediaserver'),
 //these are in the config options, so replaced
 var lmsip = 'localhost';
 var lmsport = '9000';
+var lmscliport = '9090';
 var lmsname = 'HOME';
 var remote_url = 'localhost';
 
@@ -48,6 +49,10 @@ function driver(opts, app) {
     }
     if (!opts.lmsport) {
       opts.lmsport = lmsport;
+      self.save(); 
+    }
+    if (!opts.lmscliport) {
+      opts.lmscliport = lmscliport;
       self.save(); 
     }
     if (!opts.lmsname) {
@@ -87,11 +92,12 @@ driver.prototype.config = function(rpc,cb) {
 driver.prototype.scan = function(opts, app) {
   var self = this;
   this.host = opts.lmsip;
+  this.lmscliport = opts.lmscliport
   this.name = opts.lmsname && opts.lmsname.length > 0? opts.lmsname : opts.lmsip;
   this.app = app;
   //self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
-  lms = new LogitechMediaServer(this.host);
+  lms = new LogitechMediaServer(this.host, this.lmscliport);
   //
   lms.on("registration_finished", function() {
     //

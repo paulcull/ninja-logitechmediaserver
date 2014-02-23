@@ -29,6 +29,10 @@ https://gist.github.com/paulcull/e41250e68a6146d32052
 ###Forum Post
 [TBD]
 
+###Notes / Conflicts
+QNAP - Installation of Squeezeserver on QNAP defaults to http port 9001
+XMBC - clashes with XMBC mean you should change the port for the Squeezeserver Command Line Interface (cli) port. Tested on 9095
+
 
 ###Installation
 
