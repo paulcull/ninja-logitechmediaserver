@@ -1,4 +1,4 @@
-var opts = {};
+var opts = {"hasSentAnnouncement":true,"lmsip": "192.168.1.85","lmsname":"QNAP","remote_url":"","lmsport":"9001"};
 
 var d = new (require('./index'))(opts, {
     on : function(x,cb){

@@ -100,8 +100,11 @@ driver.prototype.scan = function(opts, app) {
     Object.keys(lms.players).forEach(function(data){
       self._app.log.debug('(Squeezebox) : Logitech player found at %s, adding to collection', data.toUpperCase());
       self.add(opts, lms, data);
-      //self._app.log.debug('(Squeezebox) : Logitech player found at %s, now added', data.toUpperCase());
+      self._app.log.debug('(Squeezebox) : Logitech player found at %s, now added', data.toUpperCase());
     })
+  });
+  lms.on("lms_log", function(e) {
+    self._app.log.debug('(Squeezebox) : Raw Log :', e);
   });
   //Start up the LMS scanner
   lms.start();
