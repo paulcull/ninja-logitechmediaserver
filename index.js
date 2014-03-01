@@ -1,8 +1,6 @@
 var LogitechMediaServer = require('logitechmediaserver'),
     util = require('util'),
     stream = require('stream'),
-    http = require('http'),
-    https = require('https');
     configHandlers = require('./lib/config-handlers');
     messages = require('./lib/config-messages');
     LMSDevice = require('./lib/device');
