@@ -1,4 +1,4 @@
-var opts = {"hasSentAnnouncement":true,"lmsip": "192.168.1.85","lmscliport":"9090","lmsname":"localhost","remote_url":"","lmsport":"9000"};
+var opts = {"hasSentAnnouncement":true,"lmsip": "localhost","lmscliport":"9090","lmsname":"localhost","remote_url":"","lmsport":"9000"};
 
 var d = new (require('./index'))(opts, {
     on : function(x,cb){

@@ -75,7 +75,7 @@ driver.prototype.config = function(rpc,cb) {
   // If its to rescan - just do it straight away
   // Otherwise, we will try action the rpc method
   if (!rpc) {
-    return configHandlers.menu.call(this,this._opts.lmsip,this._opts.lmsport,this._opts.lmsname,this._opts.remote_url,cb);
+    return configHandlers.menu.call(this,this._opts.lmsip,this._opts.lmsport,this._opts.lmscliport,this._opts.lmsname,this._opts.remote_url,cb);
   }
   else if (rpc.method === 'scan') {
     self._app.log.debug('(Squeezebox) : about to re-scan');
