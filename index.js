@@ -32,6 +32,9 @@ function driver(opts, app) {
   this._app = app;
   this._opts = opts;
 
+  opts._spotify_host = spotify_host;
+  opts._spotify_url_start = spotify_url_start;
+
   this._devices = [];
   this._lms = null;
   var self = this;
