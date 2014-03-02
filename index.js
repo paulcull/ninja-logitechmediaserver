@@ -101,6 +101,7 @@ driver.prototype.scan = function(opts, app) {
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
 
   lms = new LogitechMediaServer(this.host, this.lmscliport);
+  lms._devices = [];
   //
   lms.on("registration_finished", function() {
     //
@@ -122,12 +123,17 @@ driver.prototype.scan = function(opts, app) {
 driver.prototype.add = function(opts, lms, mac) {
   var self = this;
   var parentDevice = new LMSDevice(opts, self._app, lms, mac);
-  self._devices.push(parentDevice);
+  //self._devices.push(parentDevice);
+  lms._devices.push(parentDevice);
 
   Object.keys(parentDevice.devices).forEach(function(id) {
     self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, mac, id, parentDevice.devices[id].G);
     self.emit('register', parentDevice.devices[id]);
   });
+
+  console.log(' ******** LMS ********** S');
+  console.log(lms);
+  console.log(' ******** LMS ********** E');
 
 };
 
