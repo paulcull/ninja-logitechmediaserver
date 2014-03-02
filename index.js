@@ -122,6 +122,7 @@ driver.prototype.scan = function(opts, app) {
 driver.prototype.add = function(opts, lms, mac) {
   var self = this;
   var parentDevice = new LMSDevice(opts, self._app, lms, mac);
+  self._devices.push(parentDevice);
 
   Object.keys(parentDevice.devices).forEach(function(id) {
     self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, mac, id, parentDevice.devices[id].G);
@@ -155,6 +156,16 @@ function LMSDevice(opts, app, lms, mac) {
   .split(',').forEach(  function listenToNotification(eventName) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
+
+      console.log('***************************')
+      console.log(self.devices.mediaObject.mac);
+      //dev = self._devices[mac];
+      //console.log(dev.mac);
+      console.log(self);
+      //console.log(self.devices[mac].mediaObject.mac);
+
+      console.log('***************************')
+
       if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       if (self.name != e) {
@@ -173,7 +184,7 @@ function LMSDevice(opts, app, lms, mac) {
   'songinfo,song_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
@@ -202,7 +213,7 @@ function LMSDevice(opts, app, lms, mac) {
   'radio_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //console.log('===== in radio');
@@ -235,7 +246,7 @@ function LMSDevice(opts, app, lms, mac) {
   'current_title'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       if (self.devices.mediaObject._data.track.source === 'radio') {
@@ -253,7 +264,7 @@ function LMSDevice(opts, app, lms, mac) {
   'spotify_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
@@ -339,7 +350,7 @@ function LMSDevice(opts, app, lms, mac) {
   .split(',').forEach(  function listenToNotification(eventName) {
     _lastevent = '';
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //console.log('playlist event payload is: %s',e);
       if (e != _lastevent) {
@@ -371,7 +382,7 @@ function LMSDevice(opts, app, lms, mac) {
   'song_path,path'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       //self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
