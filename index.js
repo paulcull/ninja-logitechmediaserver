@@ -5,6 +5,8 @@ var LogitechMediaServer = require('logitechmediaserver'),
     messages = require('./lib/config-messages'),
     https = require('https');
 
+var request = require('request');
+
 // ES: This code is horrid. Please fix it.
 // If Elliot says it horrid then it is
 
@@ -143,10 +145,6 @@ function LMSDevice(opts, app, lms, mac, emitter) {
 
   console.log('got opts: %s',JSON.stringify(opts));
 
-  // set this collection of devices to a unique squeezebox
-  // console.log('***************');
-  // console.log(lms.players);
-  // console.log('***************');
   player = lms.players[mac];
 
   // set subscriptions to each of the events
@@ -275,44 +273,71 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         method: 'GET'
       };
 
-      var req = https.get(get_options, function(res) {
-        console.log("Got response: " + res.statusCode);
-        console.log("Got headers: " + JSON.stringify(res.headers));
-        //console.log(res);
-        res.on('data',function(chunk){
-          console.log('===== ALL CHUNK DATA');
-          console.log(chunk);        
-          var _spotData = JSON.parse(chunk);
-          console.log('===== ALL SPOT DATA');
-          console.log(JSON.stringify(_spotData));
-          //set track details for spotify - not many
-          self.devices.mediaObject._data.track.name = _spotData.title;
-          self.devices.mediaObject._data.track.artist = '';
-          self.devices.mediaObject._data.track.album = '';
-          self.devices.mediaObject._data.track.disc_number = '';
-          self.devices.mediaObject._data.track.track_number = '';
-          self.devices.mediaObject._data.track.duration = '';
-          self.devices.mediaObject._data.track.id = e.id;
-          self.devices.mediaObject._data.state.track_id = e.id;
-          self.devices.mediaObject._data.track.album_artist = e.artist;
-          self.devices.mediaObject._data.track.squeeze_url = '';
-          self.devices.mediaObject._data.track.source = e.source;
-          self.devices.mediaObject._data.track.spotify_url = spotify_host+spotify_url_start+e.id;
-          self.devices.mediaObject._data.image = _spotData.thumbnail_url;
 
-          self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-          //uncomment to see the media object being sent
-         self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
-         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+      // var req2 = request('https://'+spotify_host+spotify_url_start+e.id, function (error, response, body) {
+      //   if (!error && response.statusCode == 200) {
+      //     console.log('-=-=RRRR-=-=-'+response) // Print the google web page.
+      //     console.log('-=-=BBBB-=-=-'+body) // Print the google web page.
+      //   }
+      // });
 
-        });
-         res.on('error', function(e) {console.log(e)});
-         res.on('close', function(e) {console.log('res close received')});
-         res.on('end', function(e) {console.log('res end received:  '+e)});
-      });
-      req.on('error', function(e) {
-        self.app.log.error('(Squeezebox) : Got error: ' + e.message);
-      });
+      // var req = https.request(get_options, function(res) {
+      //   console.log("statusCode: ", res.statusCode);
+      //   console.log("headers: ", res.headers);
+
+      //   res.on('data', function(d) {
+      //     console.log('***** DATA**** '+d);
+      //     //process.stdout.write(d);
+      //   });
+      // });
+      // req.end();
+
+      // req.on('error', function(e) {
+      //   console.error(e);
+      // });
+
+
+      // var req = https.get(get_options, function(res) {
+      //   // console.log("Got response: " + res.statusCode);
+      //   // console.log("Got headers: " + JSON.stringify(res.headers));
+      //   // console.log(res);
+      //   res.on('data',function(chunk) {
+      //     console.log('===== ALL CHUNK DATA');
+      //     console.log(chunk);
+      //     var _spotData = JSON.parse(chunk);
+      //     console.log('===== ALL SPOT DATA');
+      //     console.log(JSON.stringify(_spotData));
+      //     //set track details for spotify - not many
+      //     self.devices.mediaObject._data.track.name = _spotData.title;
+      //     self.devices.mediaObject._data.track.artist = '';
+      //     self.devices.mediaObject._data.track.album = '';
+      //     self.devices.mediaObject._data.track.disc_number = '';
+      //     self.devices.mediaObject._data.track.track_number = '';
+      //     self.devices.mediaObject._data.track.duration = '';
+      //     self.devices.mediaObject._data.track.id = e.id;
+      //     self.devices.mediaObject._data.state.track_id = e.id;
+      //     self.devices.mediaObject._data.track.album_artist = e.artist;
+      //     self.devices.mediaObject._data.track.squeeze_url = '';
+      //     self.devices.mediaObject._data.track.source = e.source;
+      //     self.devices.mediaObject._data.track.spotify_url = spotify_host+spotify_url_start+e.id;
+      //     self.devices.mediaObject._data.image = _spotData.thumbnail_url;
+
+      //     self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+      //     //uncomment to see the media object being sent
+      //     self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+      //     self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+
+      //   });
+      //    res.on('error', function(e) {console.log(e)});
+      //    res.on('close', function(e) {console.log('res close received')});
+      //    res.on('end', function(e) {console.log('res end received:  '+e)});
+      // });
+      // req.end();
+
+      // req.on('error', function(e) {
+      //   self.app.log.error('(Squeezebox) : Got error: ' + e.message);
+      // });
+
     });
   });
 
@@ -374,7 +399,7 @@ function LMSDevice(opts, app, lms, mac, emitter) {
         self.devices.mediaObject._data.state.nextmode = 'Play'          
       }
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-      self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+      self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
 
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
       //player.getSongInfo('file:'+e.file);
