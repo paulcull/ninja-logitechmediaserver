@@ -163,17 +163,17 @@ function LMSDevice(opts, app, player, mac) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
 
-      console.log('***************************')
-      console.log(self.devices.mediaObject.mac);
-      console.log(player.id);
-      //dev = self._devices[mac];
-      //console.log(dev.mac);
-      //console.log(self);
-      //console.log(self.devices[mac].mediaObject.mac);
+      // console.log('***************************')
+      // console.log(self.devices.mediaObject.mac);
+      // console.log(player.id);
+      // //dev = self._devices[mac];
+      // //console.log(dev.mac);
+      // //console.log(self);
+      // //console.log(self.devices[mac].mediaObject.mac);
 
-      console.log('***************************')
+      // console.log('***************************')
 
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       if (self.name != e) {
         self.name = e;
@@ -191,7 +191,7 @@ function LMSDevice(opts, app, player, mac) {
   'songinfo,song_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
@@ -220,7 +220,7 @@ function LMSDevice(opts, app, player, mac) {
   'radio_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //console.log('===== in radio');
@@ -253,7 +253,7 @@ function LMSDevice(opts, app, player, mac) {
   'current_title'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       if (self.devices.mediaObject._data.track.source === 'radio') {
@@ -271,7 +271,7 @@ function LMSDevice(opts, app, player, mac) {
   'spotify_details'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
       //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
@@ -357,7 +357,7 @@ function LMSDevice(opts, app, player, mac) {
   .split(',').forEach(  function listenToNotification(eventName) {
     _lastevent = '';
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //console.log('playlist event payload is: %s',e);
       if (e != _lastevent) {
@@ -389,7 +389,7 @@ function LMSDevice(opts, app, player, mac) {
   'song_path,path'
   .split(',').forEach(  function listenToNotification(eventName) {
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       //self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
@@ -401,7 +401,7 @@ function LMSDevice(opts, app, player, mac) {
   // 'mode'
   // .split(',').forEach(  function listenToNotification(eventName) {
   //   player.on(eventName, function(e) {
-  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     //if (player.id !== self.devices.mediaObject.mac) { return };
   //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
   //     console.log('Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
   //     //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
@@ -427,7 +427,7 @@ function LMSDevice(opts, app, player, mac) {
   // 'volume'
   // .split(',').forEach(  function listenToNotification(eventName) {
   //   player.on(eventName, function(e) {
-  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     //if (player.id !== self.devices.mediaObject.mac) { return };
   //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
   //     self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
   //     self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);      
@@ -442,7 +442,7 @@ function LMSDevice(opts, app, player, mac) {
   // 'power'//State,power'
   // .split(',').forEach(  function listenToNotification(eventName) {
   //   player.on(eventName, function(e) {
-  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     //if (player.id !== self.devices.mediaObject.mac) { return };
   //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
   //     //console.log('e for %s is this: %s',eventName, e);
   //     var _state = e==1 ? 'on' : 'off';
