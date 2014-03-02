@@ -122,18 +122,18 @@ driver.prototype.scan = function(opts, app) {
 
 driver.prototype.add = function(opts, lms, mac) {
   var self = this;
-  var parentDevice = new LMSDevice(opts, self._app, lms, mac);
+  var parentDevice = new LMSDevice(opts, self._app, lms.players[mac], mac);
   //self._devices.push(parentDevice);
-  lms._devices.push(parentDevice);
+  //lms._devices.push(parentDevice);
 
   Object.keys(parentDevice.devices).forEach(function(id) {
     self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, mac, id, parentDevice.devices[id].G);
     self.emit('register', parentDevice.devices[id]);
   });
 
-  console.log(' ******** LMS ********** S');
-  console.log(lms);
-  console.log(' ******** LMS ********** E');
+  // console.log(' ******** LMS ********** S');
+  // console.log(lms);
+  // console.log(' ******** LMS ********** E');
 
 };
 
@@ -143,7 +143,7 @@ module.exports = driver;
 //module.exports = LMSDevice;
 
 //function LMSDevice(opts, app, lms, mac, emitter) {
-function LMSDevice(opts, app, lms, mac) {
+function LMSDevice(opts, app, player, mac) {
 
   this.app = app;
   this.host = opts.lmsip;
@@ -154,7 +154,7 @@ function LMSDevice(opts, app, lms, mac) {
 
   var self = this;
 
-  player = lms.players[mac];
+  //player = lms.players[mac];
 
   // set subscriptions to each of the events
   //name is what it says - name of the player
@@ -165,9 +165,10 @@ function LMSDevice(opts, app, lms, mac) {
 
       console.log('***************************')
       console.log(self.devices.mediaObject.mac);
+      console.log(player.id);
       //dev = self._devices[mac];
       //console.log(dev.mac);
-      console.log(self);
+      //console.log(self);
       //console.log(self.devices[mac].mediaObject.mac);
 
       console.log('***************************')
