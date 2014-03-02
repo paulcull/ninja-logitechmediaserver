@@ -160,6 +160,7 @@ function LMSDevice(opts, app, lms, mac) {
   var self = this;
 
   player = lms.players[mac];
+  //thisDev = self.devices.mediaObject[mac];
   //console.log('++++ssdsdsdfsdfsdfsdfs');
   //console.log(self._devices);
   //self.devices.mediaObject = self._devices[mac];
@@ -171,6 +172,11 @@ function LMSDevice(opts, app, lms, mac) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
       //console.log(self);
+      if (player.id !== self.devices.mediaObject.mac) {
+          console.log(' ----  NOT THIS ONE');
+        } else {
+          console.log(' ----  YES THIS ONE');
+        };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       console.log(self.devices);
       if (self.name != e) {
