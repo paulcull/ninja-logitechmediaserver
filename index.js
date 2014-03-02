@@ -31,9 +31,6 @@ function driver(opts, app) {
   this._app = app;
   this._opts = opts;
 
-  opts._spotify_host = spotify_host;
-  opts._spotify_url_start = spotify_url_start;
-
   this._devices = [];
   this._lms = null;
   var self = this;
@@ -125,9 +122,15 @@ driver.prototype.add = function(opts, lms, mac) {
   self._devices.push(parentDevice);
 
   Object.keys(parentDevice.devices).forEach(function(id) {
-    self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, parentDevice.devices[id]._name, id, parentDevice.devices[id].G);
+    //self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, parentDevice.devices[id]._name, id, parentDevice.devices[id].G);
+    self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, id, parentDevice.devices[id].G);
     self.emit('register', parentDevice.devices[id]);
   });
+
+  console.log('+++++++ +++++++++ This is the devices');
+  console.log(parentDevice);
+  console.log('+++++++ +++++++++ This is the devices');
+
 
 };
 
@@ -139,19 +142,20 @@ module.exports = driver;
 //function LMSDevice(opts, app, lms, mac, emitter) {
 function LMSDevice(opts, app, lms, mac) {
 
-  var self = this;
-  self.mac = mac;
-
   this.app = app;
   this.host = opts.lmsip;
   this.port = opts.lmsport;
   this.cliport = opts.lmscliport;
   this.name = opts.lmsname;
+  this.mac = mac;
 
-  var spotify_host = opts._spotify_host;
-  var spotify_url_start = opts._spotify_url_start;
+  // var spotify_host = opts._spotify_host;
+  // var spotify_url_start = opts._spotify_url_start;
 
   console.log('got opts: %s',JSON.stringify(opts));
+  console.log(lms.players);
+
+  var self = this;
 
   player = lms.players[mac];
 
@@ -177,9 +181,9 @@ function LMSDevice(opts, app, lms, mac) {
         //   self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, self.devices[id]._name, id, self.devices[id].G);
         //   self.devices[id].name = self.name+self.devices[id]._name;
         //   emitter.emit('register', self.devices[id]);
-        //   self.name = e;
+        self.name = e;
         // });
-        self.devices.mediaObject._data.state.player_name = self.name;
+        self.devices.mediaObject._data.state.player_name = e;
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
         player.getPlayerSong();
       } else
