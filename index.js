@@ -120,8 +120,15 @@ driver.prototype.scan = function(opts, app) {
 
 driver.prototype.add = function(opts, lms, mac) {
   var self = this;
-  var _lmsDevice = new LMSDevice(opts, self._app, lms, mac, self);
-  self._devices.push(_lmsDevice);
+  //var _lmsDevice = new LMSDevice(opts, self._app, lms, mac, self);
+  var parentDevice = new LMSDevice(opts, self._app, lms, mac);
+  self._devices.push(parentDevice);
+
+  Object.keys(parentDevice.devices).forEach(function(id) {
+    self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, parentDevice.devices[id]._name, id, parentDevice.devices[id].G);
+    self.emit('register', parentDevice.devices[id]);
+  });
+
 };
 
 module.exports = driver;
@@ -129,7 +136,8 @@ module.exports = driver;
 
 //module.exports = LMSDevice;
 
-function LMSDevice(opts, app, lms, mac, emitter) {
+//function LMSDevice(opts, app, lms, mac, emitter) {
+function LMSDevice(opts, app, lms, mac) {
 
   var self = this;
   self.mac = mac;
@@ -165,12 +173,12 @@ function LMSDevice(opts, app, lms, mac, emitter) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
       if (self.name != e) {
-        Object.keys(self.devices).forEach(function(id) {
-          self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, self.devices[id]._name, id, self.devices[id].G);
-          self.devices[id].name = self.name+self.devices[id]._name;
-          emitter.emit('register', self.devices[id]);
-          self.name = e;
-        });
+        // Object.keys(self.devices).forEach(function(id) {
+        //   self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, self.devices[id]._name, id, self.devices[id].G);
+        //   self.devices[id].name = self.name+self.devices[id]._name;
+        //   emitter.emit('register', self.devices[id]);
+        //   self.name = e;
+        // });
         self.devices.mediaObject._data.state.player_name = self.name;
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
         player.getPlayerSong();
