@@ -155,7 +155,7 @@ function LMSDevice(opts, app, lms, mac) {
   .split(',').forEach(  function listenToNotification(eventName) {
     //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
+      if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       if (self.name != e) {
         self.name = e;
@@ -234,15 +234,10 @@ function LMSDevice(opts, app, lms, mac) {
   //songinfo has all the track details
   'current_title'
   .split(',').forEach(  function listenToNotification(eventName) {
-   console.log('Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
     player.on(eventName, function(e) {
       if (player.id !== self.devices.mediaObject.mac) { return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
-      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
-      //console.log('**** Checking Radio....START');
-      //console.log(JSON.stringify(self.devices.mediaObject._data));
-      //console.log('**** Checking Radio....STOP');
       if (self.devices.mediaObject._data.track.source === 'radio') {
         self.devices.mediaObject._data.track.name = e;
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
@@ -384,99 +379,99 @@ function LMSDevice(opts, app, lms, mac) {
     });
   });
 
-  // this is the playing mode
-  'mode'
-  .split(',').forEach(  function listenToNotification(eventName) {
-    player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
-      self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      console.log('Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
-      self.app.log.debug('(Squeezebox) : Got Event %s with mode as %s',eventName,e);
-      self.devices.mediaObject._data.state.mode = e
-      if (e === 'play') {
-        self.devices.mediaObject._data.state.nextmode = 'Pause'
-        if (self.devices.mediaObject._data.state.state === 'off') {
-          self.devices.mediaObject._data.state.nextmode = '-'
-        } 
-      } else {
-        self.devices.mediaObject._data.state.nextmode = 'Play'          
-      }
-      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-      self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
+  // // this is the playing mode
+  // 'mode'
+  // .split(',').forEach(  function listenToNotification(eventName) {
+  //   player.on(eventName, function(e) {
+  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
+  //     console.log('Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
+  //     //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
+  //     self.app.log.debug('(Squeezebox) : Got Event %s with mode as %s',eventName,e);
+  //     self.devices.mediaObject._data.state.mode = e
+  //     if (e === 'play') {
+  //       self.devices.mediaObject._data.state.nextmode = 'Pause'
+  //       if (self.devices.mediaObject._data.state.state === 'off') {
+  //         self.devices.mediaObject._data.state.nextmode = '-'
+  //       } 
+  //     } else {
+  //       self.devices.mediaObject._data.state.nextmode = 'Play'          
+  //     }
+  //     self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+  //     self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
 
-      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
-      //player.getSongInfo('file:'+e.file);
-    });
-  });
+  //     self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+  //     //player.getSongInfo('file:'+e.file);
+  //   });
+  // });
 
-  // does what it says
-  'volume'
-  .split(',').forEach(  function listenToNotification(eventName) {
-    player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
-      self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
-      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);      
-      self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
-      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
-      self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
-      //self.devices.mediaObject.write('data',self.devices.mediaObject._data)
-    });
-  });
+  // // does what it says
+  // 'volume'
+  // .split(',').forEach(  function listenToNotification(eventName) {
+  //   player.on(eventName, function(e) {
+  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
+  //     self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
+  //     self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);      
+  //     self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+  //     self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+  //     self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
+  //     //self.devices.mediaObject.write('data',self.devices.mediaObject._data)
+  //   });
+  // });
 
-  // set subscriptions to each of the events
-  'power'//State,power'
-  .split(',').forEach(  function listenToNotification(eventName) {
-    player.on(eventName, function(e) {
-      if (player.id !== self.devices.mediaObject.mac) { return };
-      self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      //console.log('e for %s is this: %s',eventName, e);
-      var _state = e==1 ? 'on' : 'off';
-      //console.log('old is %s : new is %s',e,_state);
-      self.app.log.debug('(Squeezebox) : Power old is %s : new is %s',e,_state);
-      // if switched off - reset everything
-      if (!e) {
-        console.log('switching off...');
-        self.devices.mediaObject._data.state.track_id = null;
-        self.devices.mediaObject._data.state.volume = 0;
-        self.devices.mediaObject._data.state.position = null;
-        self.devices.mediaObject._data.state.state = "off";
-        self.devices.mediaObject._data.state.nextstate = "On";
-        self.devices.mediaObject._data.track.duration = 0;
-        self.devices.mediaObject._data.state.mode = "off"
-        self.devices.mediaObject._data.state.nextmode = "-"
+  // // set subscriptions to each of the events
+  // 'power'//State,power'
+  // .split(',').forEach(  function listenToNotification(eventName) {
+  //   player.on(eventName, function(e) {
+  //     if (player.id !== self.devices.mediaObject.mac) { return };
+  //     self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
+  //     //console.log('e for %s is this: %s',eventName, e);
+  //     var _state = e==1 ? 'on' : 'off';
+  //     //console.log('old is %s : new is %s',e,_state);
+  //     self.app.log.debug('(Squeezebox) : Power old is %s : new is %s',e,_state);
+  //     // if switched off - reset everything
+  //     if (!e) {
+  //       console.log('switching off...');
+  //       self.devices.mediaObject._data.state.track_id = null;
+  //       self.devices.mediaObject._data.state.volume = 0;
+  //       self.devices.mediaObject._data.state.position = null;
+  //       self.devices.mediaObject._data.state.state = "off";
+  //       self.devices.mediaObject._data.state.nextstate = "On";
+  //       self.devices.mediaObject._data.track.duration = 0;
+  //       self.devices.mediaObject._data.state.mode = "off"
+  //       self.devices.mediaObject._data.state.nextmode = "-"
 
-        self.devices.mediaObject._data.track.name = 'Player is off';
-        self.devices.mediaObject._data.track.artist = '';
-        self.devices.mediaObject._data.track.album = '';
-        self.devices.mediaObject._data.track.disc_number = '';
-        self.devices.mediaObject._data.track.track_number = '';
-        self.devices.mediaObject._data.track.id = '';
-        self.devices.mediaObject._data.state.track_id = '';
-        self.devices.mediaObject._data.track.album_artist = null;
-        self.devices.mediaObject._data.track.squeeze_url = null;
-        self.devices.mediaObject._data.track.spotify_url = null;
-        self.devices.mediaObject._data.track.source = null;
+  //       self.devices.mediaObject._data.track.name = 'Player is off';
+  //       self.devices.mediaObject._data.track.artist = '';
+  //       self.devices.mediaObject._data.track.album = '';
+  //       self.devices.mediaObject._data.track.disc_number = '';
+  //       self.devices.mediaObject._data.track.track_number = '';
+  //       self.devices.mediaObject._data.track.id = '';
+  //       self.devices.mediaObject._data.state.track_id = '';
+  //       self.devices.mediaObject._data.track.album_artist = null;
+  //       self.devices.mediaObject._data.track.squeeze_url = null;
+  //       self.devices.mediaObject._data.track.spotify_url = null;
+  //       self.devices.mediaObject._data.track.source = null;
 
-        self.devices.mediaObject._data.image = 'null';
+  //       self.devices.mediaObject._data.image = 'null';
 
-        self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-        self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
-        self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+  //       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+  //       self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+  //       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
 
-        //
-       } else {
-        self.devices.mediaObject._data.state.state = 'on';
-        self.devices.mediaObject._data.state.nextstate = 'Off';        
-        self.devices.mediaObject._data.state.volume = player.getNoiseLevel()
-       player.getPlayerSong();
+  //       //
+  //      } else {
+  //       self.devices.mediaObject._data.state.state = 'on';
+  //       self.devices.mediaObject._data.state.nextstate = 'Off';        
+  //       self.devices.mediaObject._data.state.volume = player.getNoiseLevel()
+  //      player.getPlayerSong();
 
-       }
-      //console.log('about to send media object with %s',self.devices.mediaObject._data);
-      //self.devices.powerState.emit('data',_state);
-    });
-  });
+  //      }
+  //     //console.log('about to send media object with %s',self.devices.mediaObject._data);
+  //     //self.devices.powerState.emit('data',_state);
+  //   });
+  // });
 
 
   // these the device types
