@@ -22,7 +22,7 @@ var spotify_host = 'embed.spotify.com';
 
 // stream links
 util.inherits(driver,stream);
-util.inherits(LMSDevice,stream);
+//util.inherits(LMSDevice,stream);
 
 
 function driver(opts, app) {
