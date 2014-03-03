@@ -5,9 +5,6 @@ var LogitechMediaServer = require('logitechmediaserver'),
     messages = require('./lib/config-messages'),
     https = require('https');
 
-// ES: This code is horrid. Please fix it.
-// If Elliot says it horrid then it is
-
 //these are in the config options, so replaced
 var lmsip = 'localhost';
 var lmsport = '9000';
@@ -85,8 +82,7 @@ driver.prototype.config = function(rpc,cb) {
     return cb(true);
   }
 };
-
-
+//
 driver.prototype.scan = function(opts, app) {
   this.host = opts.lmsip;
   this.lmscliport = opts.lmscliport
@@ -95,11 +91,8 @@ driver.prototype.scan = function(opts, app) {
 
   var self = this;
 
-  //self._app.log.info('(Squeezebox) Scanning with options %s...',JSON.stringify(opts));
   self._app.log.debug('(Squeezebox) : Creating connection to Logitech Media Server Host for %s at host %s', this.name, this.host);
-
   lms = new LogitechMediaServer(this.host, this.lmscliport);
-  lms._devices = [];
   //
   lms.on("registration_finished", function() {
     //
@@ -121,26 +114,15 @@ driver.prototype.scan = function(opts, app) {
 driver.prototype.add = function(opts, lms, mac) {
   var self = this;
   var parentDevice = new LMSDevice(opts, self._app, lms.players[mac], mac);
-  //self._devices.push(parentDevice);
-  //lms._devices.push(parentDevice);
-
   Object.keys(parentDevice.devices).forEach(function(id) {
     self.app.log.debug('(Squeezebox) : Adding sub-device',opts.lmsip, mac, id, parentDevice.devices[id].G);
     self.emit('register', parentDevice.devices[id]);
   });
-
-  // console.log(' ******** LMS ********** S');
-  // console.log(lms);
-  // console.log(' ******** LMS ********** E');
-
 };
-
+//
 module.exports = driver;
-
-
-//module.exports = LMSDevice;
-
-//function LMSDevice(opts, app, lms, mac, emitter) {
+//
+//
 function LMSDevice(opts, app, player, mac) {
 
   this.app = app;
@@ -152,28 +134,16 @@ function LMSDevice(opts, app, player, mac) {
 
   var self = this;
 
-  //player = lms.players[mac];
-
   // set subscriptions to each of the events
   //name is what it says - name of the player
   'name'
   .split(',').forEach(  function listenToNotification(eventName) {
-    //self.app.log.debug('listening to %s on %s',eventName,mac.toUpperCase());
     player.on(eventName, function(e) {
-
-      // console.log('***************************')
-      // console.log(self.devices.mediaObject.mac);
-      // console.log(player.id);
-      // //dev = self._devices[mac];
-      // //console.log(dev.mac);
-      // //console.log(self);
-      // //console.log(self.devices[mac].mediaObject.mac);
-
-      // console.log('***************************')
 
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       if (self.name != e) {
+        self.devices.mediaObject.name = '***'+e+self.devices.mediaObject._name;
         self.name = e;
         self.devices.mediaObject._data.state.player_name = e;
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
@@ -209,7 +179,7 @@ function LMSDevice(opts, app, player, mac) {
       //
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
       // uncomment to see the media object being sent
-      self.app.log.debug('(Squeezebox) : %s : object : %s',JSON.stringify(eventName), JSON.stringify(self.devices.mediaObject._data));
+      // self.app.log.debug('(Squeezebox) : %s : object : %s',JSON.stringify(eventName), JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
     });
   });
@@ -237,10 +207,10 @@ function LMSDevice(opts, app, player, mac) {
       self.devices.mediaObject._data.track.source = e.source;
       self.devices.mediaObject._data.track.spotify_url = '';
       self.devices.mediaObject._data.image = ' ';
-
+      //
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
       // uncomment to see the media object being sent
-      self.app.log.debug('(Squeezebox) : %s : object : %s',JSON.stringify(eventName), JSON.stringify(self.devices.mediaObject._data));
+      // self.app.log.debug('(Squeezebox) : %s : object : %s',JSON.stringify(eventName), JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
     });
   });
@@ -256,7 +226,7 @@ function LMSDevice(opts, app, player, mac) {
         self.devices.mediaObject._data.track.name = e;
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
         // uncomment to see the media object being sent
-        self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+        // self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
         //self.devices.coverArt.write(e);
       }
@@ -287,24 +257,22 @@ function LMSDevice(opts, app, player, mac) {
       //
       self.devices.mediaObject._data.track.name = '';  
       self.devices.mediaObject._data.image = '';
-
+      //
       //Have to go out to spotify to get the track details
       var get_options = {
         hostname: spotify_host,
         path: spotify_url_start+e.id,
         method: 'GET'
       };
-
+      // TODO : Still not working again
       var req = https.get(get_options, function(res) {
-        console.log("Got response: " + res.statusCode);
-        // console.log("Got headers: " + JSON.stringify(res.headers));
-        // console.log(res);
+        self.app.log.debug("Spotify : Got response: " + res.statusCode);
         res.on('data',function(chunk) {
-          console.log('===== ALL CHUNK DATA');
-          console.log(chunk);
+          self.app.log.debug('===== ALL CHUNK DATA');
+          //console.log(chunk);
           var _spotData = JSON.parse(chunk);
-          console.log('===== ALL SPOT DATA');
-          console.log(JSON.stringify(_spotData));
+          //console.log('===== ALL SPOT DATA');
+          //console.log(JSON.stringify(_spotData));
           // //set track details for spotify - not many
           self.devices.mediaObject._data.track.name = _spotData.title;
           self.devices.mediaObject._data.image = _spotData.thumbnail_url;
@@ -328,7 +296,7 @@ function LMSDevice(opts, app, player, mac) {
 
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
       //uncomment to see the media object being sent
-      self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+      //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
 
 
@@ -343,27 +311,16 @@ function LMSDevice(opts, app, player, mac) {
     player.on(eventName, function(e) {
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      //console.log('playlist event payload is: %s',e);
       if (e != _lastevent) {
         if (e === 'playlist pause 0') {
-          //self.devices.displayPlay.emit('data', 'playlist is '+e);
         } else if (startsWith("playlist newsong", e)) {
-          self.app.log.debug('(Squeezebox) : Playlist song');
           player.getPlayerSong();
         } else if (startsWith("playlist play", e)) {
-          self.app.log.debug('(Squeezebox) : Playlist play');
           player.getPlayerSong();
         } else if (startsWith("playlist open", e)) {
-          self.app.log.debug('(Squeezebox) : New Playlist');
           var mediaFileName = e.substr(14,(e.length-14));
-          console.log('*** about to get playlist openfile songinfo for %s', mediaFileName);
           player.getSongInfo(mediaFileName);
-        } else {
-          //console.log('**** nb emit logitech playlist on %s for %s with value %s',mac.toUpperCase()+'-*-'+self.name,eventName,e);
-          //self.devices.mediaObject._data.state.track_id = e;
-          //self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
-          //self.devices.displayPlay.emit('data', 'playlist is '+e);
-        }
+        } 
       }
     });
   });
@@ -375,7 +332,6 @@ function LMSDevice(opts, app, player, mac) {
     player.on(eventName, function(e) {
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       //self.app.log.debug('(Squeezebox) : Got Event %s with filename %s',eventName,e.file);
       player.getSongInfo('file:'+e.file);
     });
@@ -387,7 +343,6 @@ function LMSDevice(opts, app, player, mac) {
     player.on(eventName, function(e) {
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      console.log('Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       //self.app.log.debug('**** nb emit logitech path for %s with value %s',eventName,JSON.stringify(e));
       self.app.log.debug('(Squeezebox) : Got Event %s with mode as %s',eventName,e);
       self.devices.mediaObject._data.state.mode = e
@@ -403,7 +358,6 @@ function LMSDevice(opts, app, player, mac) {
       self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
 
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
-      //player.getSongInfo('file:'+e.file);
     });
   });
 
@@ -419,7 +373,6 @@ function LMSDevice(opts, app, player, mac) {
       self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
       self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
-      //self.devices.mediaObject.write('data',self.devices.mediaObject._data)
     });
   });
 
@@ -429,13 +382,11 @@ function LMSDevice(opts, app, player, mac) {
     player.on(eventName, function(e) {
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
-      //console.log('e for %s is this: %s',eventName, e);
       var _state = e==1 ? 'on' : 'off';
-      //console.log('old is %s : new is %s',e,_state);
       self.app.log.debug('(Squeezebox) : Power old is %s : new is %s',e,_state);
       // if switched off - reset everything
       if (!e) {
-        console.log('switching off...');
+        //console.log('switching off...');
         self.devices.mediaObject._data.state.track_id = null;
         self.devices.mediaObject._data.state.volume = 0;
         self.devices.mediaObject._data.state.position = null;
@@ -444,7 +395,7 @@ function LMSDevice(opts, app, player, mac) {
         self.devices.mediaObject._data.track.duration = 0;
         self.devices.mediaObject._data.state.mode = "off"
         self.devices.mediaObject._data.state.nextmode = "-"
-
+        //
         self.devices.mediaObject._data.track.name = 'Player is off';
         self.devices.mediaObject._data.track.artist = '';
         self.devices.mediaObject._data.track.album = '';
@@ -456,13 +407,12 @@ function LMSDevice(opts, app, player, mac) {
         self.devices.mediaObject._data.track.squeeze_url = null;
         self.devices.mediaObject._data.track.spotify_url = null;
         self.devices.mediaObject._data.track.source = null;
-
+        //
         self.devices.mediaObject._data.image = 'null';
 
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
         self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
-
         //
        } else {
         self.devices.mediaObject._data.state.state = 'on';
@@ -486,7 +436,6 @@ function LMSDevice(opts, app, player, mac) {
     this.D = 280;
     this.G = 'LMSMO'+self.mac.replace(/[^a-zA-Z0-9]/g, '');
     this.mac = self.mac
-    //this.G = self.mac;
     this._name = ' - MediaObject';
      this._features = {
       "play":true,
@@ -534,10 +483,11 @@ function LMSDevice(opts, app, player, mac) {
       switch(data.command)
       {
       case 'onoff':
-        self.app.log.debug('Squeezebox - Toggle on/off');
         if (self.devices.mediaObject._data.state.state === 'off') {
+          self.app.log.debug('Squeezebox - Toggle on/off - Switch ON');
           player.switchOn();
         } else {
+          self.app.log.debug('Squeezebox - Toggle on/off - Switch OFF');
           player.switchOff();
         }
         break;
@@ -571,19 +521,18 @@ function LMSDevice(opts, app, player, mac) {
   };
 
   // These are the devices created from device types
-
   this.devices = {
     mediaObject: new mediaObject()
   };
 }
 
-
+//
 // a couple of helpers
-
+//
 function startsWith(search, s) {
     return s.substr(0,search.length) == search;
 }
-
+//
 LMSDevice.prototype.end = function() {};
 LMSDevice.prototype.close = function() {};
 
