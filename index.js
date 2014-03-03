@@ -5,8 +5,6 @@ var LogitechMediaServer = require('logitechmediaserver'),
     messages = require('./lib/config-messages'),
     https = require('https');
 
-var request = require('request');
-
 // ES: This code is horrid. Please fix it.
 // If Elliot says it horrid then it is
 
@@ -223,8 +221,6 @@ function LMSDevice(opts, app, player, mac) {
       //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
       self.app.log.debug('(Squeezebox) : Event: %s - Got Player %s and sending to %s with value %s', eventName, player.id, self.devices.mediaObject.mac, e);
       self.app.log.debug('(Squeezebox) : Got %s in ninja',eventName);
-      //console.log('===== in radio');
-      //self.app.log.debug('(Squeezebox) : Using these options: %s',JSON.stringify(opts));
       //This is the track details for Radio
       if (self.devices.mediaObject._data.track.artist !== 'Radio') {
          self.devices.mediaObject._data.track.name = '';
