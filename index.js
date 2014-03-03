@@ -105,7 +105,7 @@ driver.prototype.scan = function(opts, app) {
     })
   });
   lms.on("lms_log", function(logData) {
-    self._app.log.debug('(Squeezebox) : Raw Log :', logData);
+    self._app.log.debug('(Squeezebox) : Raw Server Log :', logData);
   });
   //Start up the LMS scanner
   lms.start();
@@ -152,6 +152,15 @@ function LMSDevice(opts, app, player, mac) {
       { 
           self.app.log.debug('In this part of the code for LMS - I shouldnt be here');
       }
+    });
+  });
+
+  //player_log is what it says - log events of the player
+  'player_log'
+  .split(',').forEach(  function listenToNotification(eventName) {
+    player.on(eventName, function(logData) {
+      //if (player.id !== self.devices.mediaObject.mac) { self.app.log.debug('(Squeezebox) : Event: %s skipped for %s' ,eventName, player.id);return };
+      self.app.log.debug('(Squeezebox) : Raw Player %s Log :', self.devices.mediaObject.mac.name, logData);
     });
   });
 
@@ -355,7 +364,7 @@ function LMSDevice(opts, app, player, mac) {
         self.devices.mediaObject._data.state.nextmode = 'Play'          
       }
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-      self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
+      //self.app.log.debug('(Squeezebox) : %s - %s : object : %s',eventName,e, JSON.stringify(self.devices.mediaObject._data));
 
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
     });
@@ -370,9 +379,9 @@ function LMSDevice(opts, app, player, mac) {
       self.devices.mediaObject._data.state.volume = player.getNoiseLevel();
       if (self.devices.mediaObject._data.state.state === 'off') {player.getPower();}
       self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);      
-      self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
-      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+      //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
       self.app.log.debug('(Squeezebox) : Volumes is %s',self.devices.mediaObject._data.state.volume);
+      self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
     });
   });
 
@@ -411,13 +420,18 @@ function LMSDevice(opts, app, player, mac) {
         self.devices.mediaObject._data.image = 'null';
 
         self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-        self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+        //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
         self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
         //
        } else {
         self.devices.mediaObject._data.state.state = 'on';
         if (self.devices.mediaObject._data.track.name === 'Player is off') {self.devices.mediaObject._data.track.name = '';};
         self.devices.mediaObject._data.state.nextstate = 'Off';        
+
+        self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+        //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+        self.devices.mediaObject.emit('data',self.devices.mediaObject._data);
+
         self.devices.mediaObject._data.state.volume = player.getNoiseLevel()
         player.getPlayerSong();
        }
