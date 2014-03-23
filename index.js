@@ -3,7 +3,7 @@ var LogitechMediaServer = require('logitechmediaserver'),
     stream = require('stream'),
     configHandlers = require('./lib/config-handlers'),
     messages = require('./lib/config-messages'),
-    https = require('https');
+    request = require('request');
 
 //these are in the config options, so replaced
 var lmsip = 'localhost';
@@ -14,6 +14,7 @@ var remote_url = 'localhost';
 
 // these are constants
 var log = console.log;
+var spotify_track_prefix = 'spotify:track:';
 var spotify_url_start = '/oembed/?url=spotify:track:';
 var spotify_host = 'embed.spotify.com';
 
@@ -268,42 +269,40 @@ function LMSDevice(opts, app, player, mac) {
       self.devices.mediaObject._data.image = '';
       //
       //Have to go out to spotify to get the track details
-      var get_options = {
-        hostname: spotify_host,
-        path: spotify_url_start+e.id,
-        method: 'GET'
-      };
-      // TODO : Still not working again
-      var req = https.get(get_options, function(res) {
-        self.app.log.debug("Spotify : Got response: " + res.statusCode);
-        res.on('data',function(chunk) {
-          self.app.log.debug('===== ALL CHUNK DATA');
-          //console.log(chunk);
-          var _spotData = JSON.parse(chunk);
-          //console.log('===== ALL SPOT DATA');
-          //console.log(JSON.stringify(_spotData));
-          // //set track details for spotify - not many
-          self.devices.mediaObject._data.track.name = _spotData.title;
-          self.devices.mediaObject._data.image = _spotData.thumbnail_url;
 
-          self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
-          //uncomment to see the media object being sent
-          self.app.log.debug('(Squeezebox) : %s (spotify data): object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
-          self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+      var opts = new Object();
+      opts.method = 'GET';
+      opts.headers = {'User-Agent':'ninja-lms'};
+      opts.url = 'https://' + spotify_host + '/' + spotify_url_start+e.id +'&format=json';
+      opts.json = '{on:true}';
+      opts.timeout = 2000;
 
 
-        });
-         res.on('error', function(e) {console.log(e)});
-         res.on('close', function(e) {console.log('res close received')});
-         res.on('end', function(a,b,c) {console.log('res end received:  '+a,b,c)});
-      });
-      req.end();
-
-      req.on('error', function(e) {
-        self.app.log.error('(Squeezebox) : Got error: ' + e.message);
+      request(opts,function(e,r,b) {
+        if (e) {
+          //console.log('request error')
+          //console.log(e);
+          self.app.log.error('(Squeezebox) :  Spotify Query error : %s',e)
+        }
+        else {
+            // console.log('request not error');
+            // console.log('b:::: %s',JSON.stringify(b));
+            //  var _spotData = JSON.parse(b);
+            var _spotData = b;
+            // console.log('===== ALL SPOT DATA');
+            // console.log('Title: %s',_spotData.title);
+            // console.log('Coverart: %s',_spotData.thumbnail_url);
+            //set track details for spotify - not many
+            self.devices.mediaObject._data.track.name = _spotData.title;
+            self.devices.mediaObject._data.image = _spotData.thumbnail_url;
+            self.app.log.debug('(Squeezebox) : about to send spotify media object for %s...',opts.lmsname);
+            //uncomment to see the media object being sent
+            //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
+            self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
+        }
       });
 
-      self.app.log.debug('(Squeezebox) : about to send media object for %s...',opts.lmsname);
+      self.app.log.debug('(Squeezebox) : about to send spotify media object for %s...',opts.lmsname);
       //uncomment to see the media object being sent
       //self.app.log.debug('(Squeezebox) : %s : object : %s',eventName, JSON.stringify(self.devices.mediaObject._data));
       self.devices.mediaObject.emit('data',self.devices.mediaObject._data)
