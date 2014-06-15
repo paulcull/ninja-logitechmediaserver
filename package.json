@@ -1,6 +1,6 @@
 {
   "name": "ninja-logitechmediaserver",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ninja Blocks module for interacting with Squeezebox or Logitech Media Server",
   "main": "index.js",
   "scripts": {

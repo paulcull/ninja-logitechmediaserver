@@ -2,7 +2,7 @@ ninja-logitechmediaserver
 =========================
 
 Author: Paul Cullender
-Version: 0.2
+Version: 0.2.1
 Status: beta
 License: BSD
 
@@ -49,6 +49,10 @@ ninja_install -g git@github.com:paulcull/ninja-logitechmediaserver.git (Requires
 Note: if you want the coverart to show, you will need to expose the logitech server directly to the web. Port 9000 on the host machine mapped on you router.
 
 ###History
+
+v0.2.1
+======
+Added multiple simple devices to work with rules
 
 v0.2
 ======
