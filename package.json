@@ -20,8 +20,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "dependencies": {
-    "logitechmediaserver": "git://github.com/paulcull/node-logitechmediaserver",
-    "request": "~2.16.0"
+    "logitechmediaserver": "git://github.com/paulcull/node-logitechmediaserver"
   },  
   "config":{
     "sockets":[]
