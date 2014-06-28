@@ -53,6 +53,7 @@ Note: if you want the coverart to show, you will need to expose the logitech ser
 v0.2.1
 ======
 Added multiple simple devices to work with rules
+**NOTE** - re update the npm dependancies, if previous version installed
 
 v0.2
 ======
