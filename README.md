@@ -1,6 +1,8 @@
 ninja-logitechmediaserver
 =========================
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/paulcull/ninja-logitechmediaserver.svg)](https://greenkeeper.io/)
+
 Author: Paul Cullender
 Version: 0.2.1
 Status: beta
